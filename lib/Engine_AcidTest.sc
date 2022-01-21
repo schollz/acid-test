@@ -1,12 +1,12 @@
 // Engine_AcidTest
 Engine_AcidTest : CroneEngine {
-	// <AcidTest>
-	var AcidTestBusDelay;
-	var AcidTestBusReverb;
-	var AcidTestFX;
-	var AcidTestSynthBass;
-	var AcidTestSynthLead;
-	// </AcidTest>
+	// <acidTest>
+	var acidTestBusDelay;
+	var acidTestBusReverb;
+	var acidTestFX;
+	var acidTestSynthBass;
+	var acidTestSynthLead;
+	// </acidTest>
 
 
 	*new { arg context, doneCallback;
@@ -15,7 +15,7 @@ Engine_AcidTest : CroneEngine {
 
 	alloc {
 
-		// <AcidTest>
+		// <acidTest>
 
 		// add synth defs
 		SynthDef("mxfx",{ 
@@ -47,7 +47,7 @@ Engine_AcidTest : CroneEngine {
 			Out.ar(out,snd2);
 		}).add;
 
-		// hotroded version of "08091500AcidTest309 by_otophilia"
+		// hotroded version of "08091500acidTest309 by_otophilia"
 
 		SynthDef("kick", {
 			arg outBus=0, amp=1.0, pitch=40,
@@ -64,13 +64,13 @@ Engine_AcidTest : CroneEngine {
 			out = out + SinOsc.ar(env1m, 0.5, env0);
 
 			out = out * 1.2;
-			out = out.clip2(1) * amp;
+			out = out.clip2(1);
 
 			snd = out.dup;
 
 			Out.ar(delayOut,snd*delaySend);
 			Out.ar(reverbOut,snd*reverbSend);
-			Out.ar(outBus, snd);
+			Out.ar(outBus, snd*amp);
 		}).add;
 
 		SynthDef("snare", {
@@ -170,12 +170,12 @@ Engine_AcidTest : CroneEngine {
 			Out.ar(outBus, snd);
 		}).add;
 
-		SynthDef("AcidTest", {
+		SynthDef("acidTest", {
 			arg outBus=0, amp=1.0,
-			gate=1, pitch=50,
+			gate=1, pitch=50,port=0,
 			reverbOut, reverbSend=0, delayOut, delaySend=0;
 			var env1, env2, out, snd;
-			pitch = Lag.kr(pitch, 0.12 * (1-Trig.kr(gate, 0.001)) * gate);
+			pitch = Lag.kr([pitch,pitch+0.05], port);
 			env1 = EnvGen.ar(Env.new([0, 1.0, 0, 0], [0.001, 2.0, 0.04], [0, -4, -4], 2), gate, amp);
 			env2 = EnvGen.ar(Env.adsr(0.001, 0.8, 0, 0.8, 70, -4), gate);
 			out = LFSaw.ar(pitch.midicps, 2, -1);
@@ -183,7 +183,7 @@ Engine_AcidTest : CroneEngine {
 			out = MoogLadder.ar(out, (pitch + env2/2).midicps+(LFNoise1.kr(0.2,1100,1500)),LFNoise1.kr(0.4,0.9).abs+0.3,3);
 			out = LeakDC.ar((out * env1).tanh/2.7);
 
-			snd = out.dup;
+			snd = out.tanh;
 
 			Out.ar(delayOut,snd*delaySend);
 			Out.ar(reverbOut,snd*reverbSend);
@@ -191,20 +191,20 @@ Engine_AcidTest : CroneEngine {
 		}).add;
 
 
-		SynthDef("AcidTest2", {
+		SynthDef("acidTest2", {
 			arg outBus=0, amp=1.0,
-			gate=1, pitch=50,
+			gate=1, pitch=50,port=0,
 			reverbOut, reverbSend=0, delayOut, delaySend=0;
 			var env1, env2, out, snd;
-			pitch = Lag.kr(pitch, 0.12 * (1-Trig.kr(gate, 0.001)) * gate);
+			pitch = Lag.kr([pitch,pitch+0.05], port);
 			env1 = EnvGen.ar(Env.perc(0.01,0.7,4,-4), gate, amp);
 			env2 = EnvGen.ar(Env.perc(0.001,0.3,600*SinOsc.kr(0.123).range(0.5,4),-3), gate);
 			out = LFPulse.ar(pitch.midicps, 0, 0.5);
 
-			out = MoogLadder.ar(out, 100+pitch.midicps + env2,LinExp.kr(SinOsc.kr(0.213),-1,1,0.01,0.2));
+			out = MoogLadder.ar(out, 100+pitch.midicps + env2,LinExp.kr(SinOsc.kr(0.153),-1,1,0.01,0.6));
 			out = LeakDC.ar((out * env1).tanh);
 
-			snd = out.dup;
+			snd = out.tanh;
 
 			Out.ar(delayOut,snd*delaySend);
 			Out.ar(reverbOut,snd*reverbSend);
@@ -213,81 +213,83 @@ Engine_AcidTest : CroneEngine {
 
 		// initialize fx synth and bus
 		context.server.sync;
-		AcidTestBusDelay = Bus.audio(context.server,2);
-		AcidTestBusReverb = Bus.audio(context.server,2);
+		acidTestBusDelay = Bus.audio(context.server,2);
+		acidTestBusReverb = Bus.audio(context.server,2);
 		context.server.sync;
-		AcidTestFX = Synth.new("mxfx",[\out,0,\inDelay,AcidTestBusDelay,\inReverb,AcidTestBusReverb]);
+		acidTestFX = Synth.new("mxfx",[\out,0,\inDelay,acidTestBusDelay,\inReverb,acidTestBusReverb]);
 		context.server.sync;
-		AcidTestSynthLead = Synth.before(AcidTestFX,"AcidTest",[\amp,0,\out,0,\delayOut,AcidTestBusDelay,\reverbOut,AcidTestBusReverb]);
-		AcidTestSynthBass = Synth.before(AcidTestFX,"AcidTest2",[\amp,0,\out,0,\delayOut,AcidTestBusDelay,\reverbOut,AcidTestBusReverb]);
+		acidTestSynthLead = Synth.before(acidTestFX,"acidTest",[\amp,0,\out,0,\delayOut,acidTestBusDelay,\reverbOut,acidTestBusReverb]);
+		acidTestSynthBass = Synth.before(acidTestFX,"acidTest2",[\amp,0,\out,0,\delayOut,acidTestBusDelay,\reverbOut,acidTestBusReverb]);
 		context.server.sync;
 
 		// add norns commands
-		this.addCommand("AcidTest_bass","ffff",{ arg msg;
-			AcidTestSynthBass.set(
+		this.addCommand("acidTest_bass","fffff",{ arg msg;
+			acidTestSynthBass.set(
 				\amp,msg[1],
 				\pitch,msg[2],
 				\delaySend,msg[3],
 				\reverbSend,msg[4],
+				\port,msg[5],
 			);
 		});
-		this.addCommand("AcidTest_bass_gate","i",{ arg msg;
-			AcidTestSynthBass.set(
+		this.addCommand("acidTest_bass_gate","i",{ arg msg;
+			acidTestSynthBass.set(
 				\gate,msg[1],
 			);
 		});
 
-		this.addCommand("AcidTest_lead","ffff",{ arg msg;
-			AcidTestSynthLead.set(
+		this.addCommand("acidTest_lead","fffff",{ arg msg;
+			acidTestSynthLead.set(
 				\amp,msg[1],
-				\pitch,msg[2],
+				\pitch,msg[2]+12,
 				\delaySend,msg[3],
 				\reverbSend,msg[4],
+				\port,msg[5],
 			);
 		});
 
-		this.addCommand("AcidTest_lead_gate","i",{ arg msg;
-			AcidTestSynthLead.set(
+		this.addCommand("acidTest_lead_gate","i",{ arg msg;
+			acidTestSynthLead.set(
 				\gate,msg[1],
 			);
 		});
 
-		this.addCommand("AcidTest_drum","sfff",{ arg msg;
-			Synth.before(AcidTestFX,msg[1].asString,[
+		this.addCommand("acidTest_drum","sfff",{ arg msg;
+			Synth.before(acidTestFX,msg[1].asString,[
 				\amp,msg[2],
-				\delayOut,AcidTestBusDelay,
+				\delayOut,acidTestBusDelay,
 				\delaySend,msg[3],
-				\reverbOut,AcidTestBusReverb,
+				\reverbOut,acidTestBusReverb,
 				\reverbSend,msg[4],
 			]);
 		});
 
-		this.addCommand("AcidTest_reverb","iff",{ arg msg;
-			AcidTestFX.set(
+		this.addCommand("acidTest_reverb","iff",{ arg msg;
+			acidTestFX.set(
 				\t_trig,msg[1],
 				\reverbAttack,msg[2],
 				\reverbDecay,msg[3],
 			);
 		});
 
-		// engine.AcidTest_delay(clock.get_beats()/16,8,0.5)
-		this.addCommand("AcidTest_delay","fff",{ arg msg;
-			AcidTestFX.set(
+		// engine.acidTest_delay(clock.get_beats()/16,8,0.5)
+		this.addCommand("acidTest_delay","fff",{ arg msg;
+			acidTestFX.set(
 				\secondsPerBeat,msg[1],
 				\delayBeats,msg[2],
 				\delayFeedback,msg[3],
 			);
 		});
-		// </AcidTest>
+		// </acidTest>
 	}
 
 	free {
-		// <AcidTest>
-		AcidTestSynthBass.free;
-		AcidTestSynthLead.free;
-		AcidTestFX.free;
-		AcidTestBusDelay.free;
-		AcidTestBusReverb.free;
-		// </AcidTest>
+		// <acidTest>
+		acidTestSynthBass.free;
+		acidTestSynthLead.free;
+		acidTestFX.free;
+		acidTestBusDelay.free;
+		acidTestBusReverb.free;
+		// </acidTest>
 	}
 }

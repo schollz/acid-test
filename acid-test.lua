@@ -60,12 +60,12 @@ function init()
         division = 1 / 16
 
     }
-    lattice:new_pattern{
-        action = function()
-            designs[1]:sequence(16, math.random(0,2))
-        end,
-        division = 2
-    }
+    -- lattice:new_pattern{
+    --     action = function()
+    --         designs[1]:sequence(16, math.random(0,2))
+    --     end,
+    --     division = 2
+    -- }
 
     clock.run(function()
         while true do
@@ -90,9 +90,10 @@ function cleanup()
 end
 
 function key(k, z)
-    if k > 1 then
-        designs[k - 1]:randomize(0)
-        designs[k - 1]:sequence(16, 3)
+    if k==2 then
+        designs[1]:sequence(16,math.random(1,2))
+    elseif k==3 then 
+        designs[1]:sequence(16)
     end
 end
 

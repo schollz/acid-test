@@ -4,8 +4,8 @@ function Design:new(o)
     o = o or {}
     setmetatable(o, self)
     self.__index = self
-    o.base_note = 50
-    o.root = o.root or 50
+    o.base_note = 57
+    o.root = o.root or 60
     o.scale_type = o.scale_type or "major"
     o.save = {"root", "scale_type", "root_index", "base_note", "points"}
 
@@ -21,31 +21,49 @@ function Design:new(o)
     o.p = {}
     o.p.slide = {
         m = mm:new({
-            m = {{0.8, 0.2}, {0.8, 0.2}}
+            m = {{0.8, 0.2}, {0.9, 0.13}}
         }),
         v = {0, 1}
     }
-    o.p.mult = {
+    o.p.bass_or_lead = {
         m = mm:new({
-            m = {{0.5, 0.8, 0.05}, {0.2, 0.6, 0.2}, {0.05, 0.8, 0.15}}
+            m = {{0.6, 0.4}, {0.4, 0.6}}
+        }),
+        v = {0, 1} -- 0=bass, 1=lead
+    }
+    o.p.bass_mult = {
+        m = mm:new({
+            m = {{0.01, 0.9, 0.15}, {0.3, 0.4, 0.3}, {0.01, 0.9, 0.1}}
         }),
         v = {-1, 0, 1}
     }
-    o.p.coef = {
+    o.p.bass_coef = {
         m = mm:new({
-            m = {{0.6, 0.3, 0.5, 0.5}, {0.7, 0.2, 0.5, 0.6}, {0.8, 0.15, 0.5, 0.6}, {0.8, 0.15, 0.5, 0.6}}
+            m = {{10, 2, 1}, {15, 2, 1}, {30, 2, 1}}
         }),
-        v = {1, 2, 4}
+        v = {1, 2, 3}
     }
-    o.p.adj = {
+    o.p.lead_mult = {
         m = mm:new({
-            m = {{0.01, 0.9, 0.09}, {0.01, 0.25, 0.7}, {0.01, 0.7, 0.25}}
+            m = {{1, 3, 2}, {2, 6, 2}, {2, 3, 1}}
         }),
-        v = {-7, 0, 7}
+        v = {-1, 0, 1}
     }
-    o.p.legato = {
+    o.p.lead_coef = {
         m = mm:new({
-            m = {{0.1, 0.9, 0}, {0.1, 0.6, 0.3}, {0.05, 0.4, 0.3}}
+            m = {{8, 4, 2}, {20, 5, 2}, {50, 2, 2}}
+        }),
+        v = {1, 2, 3}
+    }
+    o.p.lead_legato = {
+        m = mm:new({
+            m = {{5, 30, 0}, {1, 20, 8}, {2, 30, 3}}
+        }),
+        v = {0, 1, 2} -- rest, new, hold
+    }
+    o.p.bass_legato = {
+        m = mm:new({
+            m = {{1, 30, 0}, {1, 20, 20}, {2, 30, 3}}
         }),
         v = {0, 1, 2} -- rest, new, hold
     }
@@ -75,7 +93,10 @@ end
 
 -- sequence generates a sequence of n numbers
 -- from current position 
-function Design:sequence(n)
+function Design:sequence(n, changes)
+    if changes~=nil and changes==0 then
+        do return end
+    end
     local seqs = {}
     for k, p in pairs(self.p) do
         seqs[k] = p.m:sequence(n)
@@ -84,27 +105,44 @@ function Design:sequence(n)
         end
     end
     local notes = {}
+    local legatos = {}
+    local root_choose = {0, -2, -3, 1}
+    local root_index = self.root_index -- + root_choose[math.random(1,#root_choose)]
+    local last_lead_note = root_index
+    local last_bass_note = root_index
     for i = 1, n do
-        local note_index = self.root_index + seqs["adj"][i] + seqs["coef"][i] * seqs["mult"][i]
-        local note=self.scale[note_index]
-        while note > self.base_note+14 do 
-            note=note-12 
+        if seqs["bass_coef"][i] == 3 and seqs["bass_mult"][i] == 1 then
+            seqs["bass_coef"][i] = 4
         end
-        while note < self.base_note-4 do 
-            note=note+12
+        local note_index = last_bass_note + seqs["bass_coef"][i] * seqs["bass_mult"][i]
+        last_bass_note = note_index
+        local legato = seqs["bass_legato"][i]
+        if seqs["bass_or_lead"][i] == 1 then
+            note_index = last_lead_note + seqs["lead_coef"][i] * seqs["lead_mult"][i]
+            last_lead_note = note_index
+            legato = seqs["lead_legato"][i]
         end
-        table.insert(notes,note)
+        local note = self.scale[note_index] + (seqs["bass_or_lead"][i] == 1 and 12 or 0)
+        table.insert(notes, note)
+        table.insert(legatos, legato)
     end
     local seq = {}
     for i = 1, n do
         table.insert(seq, {
             note = notes[i],
-            legato = seqs["legato"][i],
+            legato = legatos[i],
             accent = seqs["accent"][i] == 1,
-            slide = seqs["slide"][i] == 1
+            slide = seqs["slide"][i] == 1,
+            bass = seqs["bass_or_lead"][i] == 0
         })
     end
-    self.seq:settable(seq)
+    if changes == nil then
+        self.seq:settable(seq)
+    else
+        for i = 1, changes do
+            self.seq[math.random(1, #seq)] = seq[i]
+        end
+    end
 end
 
 function Design:encode()

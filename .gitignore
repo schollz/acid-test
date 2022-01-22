@@ -1,6 +1,6 @@
 # Compiled Lua sources
 luac.out
-
+lib/cjson.so
 # luarocks build files
 *.src.rock
 *.zip

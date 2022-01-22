@@ -5,7 +5,7 @@ generative acid basslines.
 
 ![meme](/img/meme.png)
 
-lately I've been listening to acid music and thinking about markov chains. previously I used markov chains to make a [jazz piano accompaniment](https://github.com/schollz/pianoai). I heard acid house as an interesting genre to also try applying stateless logic for generating believable sequences. whether this is believable "acid" music or not is...debatable.
+lately I've been listening to acid music and thinking about markov chains. previously I used markov chains to make a [jazz piano accompaniment](https://github.com/schollz/pianoai). it seemed to me that acid house basslines amenable to applying stateless logic for generating believable sequences. whether this is believable acid music or not is...debatable.
 
 
 
@@ -15,43 +15,44 @@ lately I've been listening to acid music and thinking about markov chains. previ
 
 ## Documentation
 
-
 the script essentially plays generatively by generating 16-note sequences based on 9 markov chains. the notes generated will either play in the build-in 303-style engine or can be output to the midi synth of your choice.
-
 
 this script assumes you have some basic understanding for a markov chain! you can get a lot of info and examples about markov chains [here](https://en.wikipedia.org/wiki/Markov_chain#Examples). feel free to ask questions.
 
-the transitions in each markov chain are determined at each step in the sequence based on probabilities that you can control. to control the probabilities you can use E1 to select an property and use E2 to select a transition in that property. then use E3 to modifty the probability of that transition. **the brighter the transition arrow, the higher the probability**. the combination of these 9 properties are then combined to generate the sequence:
+each step in a sequence has similar properties to the 303 sequencer in that it has three parameters: a note, a slide toggle, and an accent togger. each step in the sequence has these three parameters determined based on the state of a markov chain. the transitions between the states of the markov chain are under your control. use E1 to select an markov chain property and use E2 to select a transition in that property. then use E3 to modifty the probability of that transition. **the brighter the transition arrow, the higher the probability**. 
+
+the combination of these 9 properties are then combined to generate the sequence.
 
 ### accent
 
-transitions between "no" and "yes", at which the velocity will be increased slightly for that note.
+transitions between "no" and "yes". when the state is 'yes', then the velocity will be increased slightly for that note.
 
 ![accent](/img/accent.png)
 
 ### slide
 
-transitions between "no" and "yes", at which the portamento is increased.
+transitions between "no" and "yes". when the state is 'yes', the portamento will be increased. for midi devices you can set the portamento cc in the `PARAMS > midi` section. for crow/engine output, the portamento is applied automatically.
 
 ![slide](/img/slide.png)
 
 ### bass or lead
 
+in designing this sequencer I felt that I had to distinguish between "bass" and "lead" notes in the bassline - "bass" notes typically being an octave below. I felt that acid basslines get part of the signature sound by oscillating between two intertwined melodies that are stacked vertically. so there are separate markov chains for the "bass" and "lead", which are combined using this "bass or lead" property.
+
 this property transitions between "bass" and "lead". the generator actually generates 32 notes - 16 bass notes and 16 lead notes, but will only select either based on the state of this property.
 
 ![bassorlead](/img/bassorlead.png)
 
-### bass coef+mult
+### bass / lead coef+mult
 
-the bass and lead both use two properties to generate the note. the starting note of each sequence is the base note defined in the parameters. that starting note is then increased by `coef x mult` at each step in the sequence. for example, if the `coef` state is `2` and the `mult` is `-1` then the sequence will transition `-2` notes in the scale.
+
+the bass and lead parts each use two properties to generate a single note. the starting note of each sequence is the "base note" defined in the parameters. the base noteis then increased by `coef x mult` at each step in the sequence where `coef` and `mult` are determined by the current state in both of those markov chains. for example, if the `coef` state is `2` and the `mult` is `-1` then the sequence will transition `-2` notes in the scale.
 
 
 ![bassorlead](/img/basscoef.png)
 
 ![bassorlead](/img/bassmult.png)
 
-
-### lead coef+mult
 
 the lead coef+mult works the same way as the bass coef+mult, but only affects the lead notes.
 
@@ -67,9 +68,6 @@ the legato of the note will be determined by the "bass note"  property (for bass
 
 ![leadnote](/img/leadnote.png)
 
-## TODO:
-
-- allow setting portamento cc
 
 ## Install
 

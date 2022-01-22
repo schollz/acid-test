@@ -19,6 +19,8 @@ been listening to acid music and thinking about markov chains. I previously made
 the script essentially plays generatively by generating 16-note sequences based on 9 markov chains. the notes generated will either play in the build-in 303-style engine or can be output to the midi synth of your choice.
 
 
+this script assumes you have some basic understanding for a markov chain! you can get a lot of info and examples about markov chains [here](https://en.wikipedia.org/wiki/Markov_chain#Examples). feel free to ask questions.
+
 the transitions in each markov chain are determined at each step in the sequence based on probabilities that you can control. to control the probabilities you can use E1 to select an property and use E2 to select a transition in that property. then use E3 to modifty the probability of that transition. the combination of these 9 properties are then combined to generate the sequence:
 
 ### accent

@@ -12,6 +12,8 @@
 -- E1 selects property
 -- E2 selects transition
 -- E3 changes transition probability
+-- K1+E1 selects saved sequence
+-- K1+K3 loads saved sequence
 
 if not string.find(package.cpath,"/home/we/dust/code/acid-test/lib/") then
   package.cpath=package.cpath..";/home/we/dust/code/acid-test/lib/?.so"
@@ -27,32 +29,50 @@ hs=include('lib/halfsecond')
 engine.name="AcidTest"
 
 note_last=nil
+fade_text=""
+fade_time=0
+shift=false
 
 function init()
-  designs={}
-  for i=1,2 do
-    table.insert(designs,design:new())
-    designs[i]:sequence(16)
+  -- setup midi
+  midis={}
+  midi_devices={"none"}
+  midi_default=1
+  for i,dev in pairs(midi.devices) do
+    local name=string.lower(dev.name)
+    if name~="virtual" and midi_default==1 then
+      midi_default=i
+    end
+    name=name:gsub("-","")
+    print("connected to "..name)
+    table.insert(midi_devices,name)
+    table.insert(midis,{
+      last_note=nil,
+      name=name,
+    conn=midi.connect(dev.port)})
   end
-  designs[2]:randomize(0.1)
-  for i=1,2 do
-    designs[i]:sequence(16)
-  end
-  design_current=1
-  design_compare={1,2}
 
   scale_names={}
   for i=1,#musicutil.SCALES do
     table.insert(scale_names,string.lower(musicutil.SCALES[i].name))
   end
+
+  params:add_separator("acid test")
+  params:add_group("scale",4)
   params:add{type="option",id="scale_mode",name="scale mode",
     options=scale_names,default=5,
   action=function() build_scale() end}
   params:add{type="number",id="root_note",name="root note",
     min=0,max=127,default=60,formatter=function(param) return musicutil.note_num_to_name(param:get(),true) end,
   action=function() build_scale() end}
+  params:add{type="number",id="base_note",name="base note",
+    min=0,max=127,default=57,formatter=function(param) return musicutil.note_num_to_name(param:get(),true) end,
+  action=function() build_scale() end}
+  params:add{type="number",id="velocity_spread",name="velocity spread",min=1,max=30,default=5}
 
-  params:add{type="control",id="bass vol",name="bass vol",controlspec=controlspec.new(-96,0,'lin',1,-6,'',1/(96)),formatter=function(v)
+  params:add_group("engine",4)
+  params:add_option("out_engine","engine output",{"no","yes"},midi_default==1 and 2 or 1)
+  params:add{type="control",id="bass vol",name="bass vol",controlspec=controlspec.new(-96,0,'lin',1,(midi_default==1 and-6 or-96),'',1/(96)),formatter=function(v)
     local val=math.floor(util.linlin(0,1,v.controlspec.minval,v.controlspec.maxval,v.raw)*10)/10
     return ((val<0) and "" or "+")..val.." dB"
   end}
@@ -65,22 +85,13 @@ function init()
     return ((val<0) and "" or "+")..val.." dB"
   end}
 
-  -- setup midi
-  midis={}
-  midi_devices={"none"}
-  for i,dev in pairs(midi.devices) do
-    local name=string.lower(dev.name)
-    name=name:gsub("-","")
-    print("connected to "..name)
-    table.insert(midi_devices,name)
-    table.insert(midis,{
-      last_note=nil,
-      name=name,
-    conn=midi.connect(dev.port)})
-  end
+  params:add_group("crow/jf",2)
+  params:add_option("out_crow","crow output",{"no","yes"})
+  params:add_option("out_crow_jf","crow jf output",{"no","yes"})
 
+  params:add_group("midi",3)
   params:add{type="option",id="midi_out_device",name="midi out device",
-    options=midi_devices,default=1,action=function(x)
+    options=midi_devices,default=midi_default,action=function(x)
       all_notes_off()
     end
   }
@@ -122,6 +133,39 @@ function init()
     end
   end)
 
+  -- setup designs
+  designs={}
+  for i=1,2 do
+    table.insert(designs,design:new())
+    designs[i]:sequence(16)
+  end
+
+  -- setup saving and loading
+  params.action_write=function(filename,name)
+    print("write",filename,name)
+    local data={}
+    for _,d in ipairs(designs) do
+      table.insert(data,d:dump())
+    end
+    local fname=filename..".json"
+    local file=io.open(fname,"w+")
+    io.output(file)
+    io.write(json.encode(data))
+    io.close(file)
+  end
+
+  params.action_read=function(filename,silent)
+    print("read",filename,silent)
+    local fname=filename..".json"
+    local f=io.open(fname,"rb")
+    local content=f:read("*all")
+    f:close()
+    local data=json.decode(content)
+    for i,s in ipairs(data) do
+      designs[i]:load(s)
+    end
+  end
+
   hs.init()
   all_notes_off()
 
@@ -152,21 +196,47 @@ function cleanup()
 end
 
 function enc(k,d)
-  if k==1 then
-    designs[1]:selp_delta(d)
-  elseif k==2 then
-    designs[1]:sel_delta(d)
-  elseif k==3 then
-    designs[1]:val_delta(d)
+  d=d<0 and-1 or 1
+  if shift then
+    if k==1 then
+      designs[1]:sel_mem(d)
+      fade_msg("seq "..designs[1].memsel)
+    end
+  else
+    if k==1 then
+      designs[1]:selp_delta(d)
+    elseif k==2 then
+      designs[1]:sel_delta(d)
+    elseif k==3 then
+      designs[1]:val_delta(d)
+    end
   end
 end
 
 function key(k,z)
-  if k==2 then
-    designs[1]:sequence(16,math.random(1,2))
-  elseif k==3 then
-    designs[1]:sequence(16)
+  if k==1 then
+    shift=z==1
+    do return end
   end
+  if shift then
+    if k==3 and z==1 then
+      designs[1]:load_mem()
+      fade_msg("loaded seq "..designs[1].memsel)
+    end
+  else
+    if k==2 and z==1 then
+      designs[1]:sequence(16,math.random(1,2))
+      fade_msg("seq "..(#designs[1].memory).." mut")
+    elseif k==3 and z==1 then
+      designs[1]:sequence(16)
+      fade_msg("seq "..(#designs[1].memory).." new")
+    end
+  end
+end
+
+function fade_msg(s)
+  fade_time=15
+  fade_text=s
 end
 
 function play(i,v,t)
@@ -183,9 +253,9 @@ function play(i,v,t)
     do_note_off=nil
   end
 
-  local velocity=math.random(60-5,60+5) -- TODO: make the +5 optional
+  local velocity=math.random(60-params:get("velocity_spread"),60+params:get("velocity_spread")) -- TODO: make the +5 optional
   if v.accent then
-    velocity=velocity+math.random(30-5,30+5)
+    velocity=velocity+math.random(30-params:get("velocity_spread"),30+params:get("velocity_spread"))
   end
   if m~=nil then
     if v.slide then
@@ -198,8 +268,20 @@ function play(i,v,t)
   if v.legato==1 or (v.legato==2 and designs[i].note_last~=v.note) then
     -- new note
     -- print("note on: "..v.note)
-    engine["acidTest_"..t](velocity/127*util.dbamp(params:get("bass vol")),v.note,0.0,0.0,v.slide and clock.get_beat_sec()/4 or 0)
-    engine["acidTest_"..t.."_gate"](1)
+    -- Audio engine out
+    if params:get("out_engine")==2 then
+      engine["acidTest_"..t](velocity/127*util.dbamp(params:get("bass vol")),v.note,0.0,0.0,v.slide and clock.get_beat_sec()/4 or 0)
+      engine["acidTest_"..t.."_gate"](1)
+    end
+    if params:get("out_crow")==2 then
+      -- add slide
+      crow.slew[1]=v.slide and clock.get_beat_sec()/4 or 0 -- TODO figure out how to do crow slew
+      crow.output[1].volts=(v.note-60)/12
+      crow.output[2].execute()
+    end
+    if params:get("out_crow_jf")==2 then
+      crow.ii.jf.play_note((v.note-60)/12,5)
+    end
     if m~=nil then
       m.conn:note_on(v.note,velocity,params:get("midi_out_channel"))
     end
@@ -209,8 +291,9 @@ function play(i,v,t)
   if do_note_off then
     -- rest / new note
     if designs[i].note_last~=nil then
-      -- print("note off: "..do_note_off)
-      engine["acidTest_"..t.."_gate"](0)
+      if params:get("out_engine")==2 then
+        engine["acidTest_"..t.."_gate"](0)
+      end
       if m~=nil then
         m.conn:note_off(do_note_off,nil,params:get("midi_out_channel"))
       end
@@ -224,6 +307,13 @@ function redraw()
   screen.clear()
   for i=1,2 do
     designs[1]:draw_matrix()
+  end
+
+  if fade_time>0 then
+    fade_time=fade_time-1
+    screen.move(2,64-2)
+    screen.level(util.clamp(fade_time,0,15))
+    screen.text(fade_text)
   end
   screen.update()
 end

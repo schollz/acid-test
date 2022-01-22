@@ -4,20 +4,8 @@ function Design:new(o)
   o=o or {}
   setmetatable(o,self)
   self.__index=self
-  o.base_note=57-24
-  o.root=o.root or 60
-  o.scale_type=o.scale_type or "major"
-  o.save={"root","scale_type","root_index","base_note","points"}
 
-  o.scale=musicutil.generate_scale(o.root%12,o.scale_type,12)
-  o.root_index=0
-  for i,v in ipairs(o.scale) do
-    if v==o.base_note then
-      o.root_index=i
-    end
-  end
-  o.points=0
-
+  o.memory={}
   o.p={}
   o.p.slide={
     m=mm:new({
@@ -59,6 +47,7 @@ function Design:new(o)
     m={{0.8,0.2},{0.8,0.2}}}),
   v={0,1}}
 
+  o.memsel=1
   o.sels={}
   o.sel=1
   o.selp=1
@@ -70,6 +59,24 @@ function Design:new(o)
 
   o.seq=s {{}}
   return o
+end
+
+function Design:sel_mem(d)
+  if next(self.memory)==nil then
+    do return end
+  end
+  print(d)
+  self.memsel=util.clamp(self.memsel+d,1,#self.memory)
+end
+
+function Design:load_mem(d)
+  if next(self.memory)==nil then
+    do return end
+  end
+  if self.memory[self.memsel]==nil then
+    do return end
+  end
+  self.seq:settable(json.decode(self.memory[self.memsel]))
 end
 
 function Design:selp_delta(d)
@@ -116,6 +123,18 @@ function Design:sequence(n,changes)
   if changes~=nil and changes==0 then
     do return end
   end
+  if self.seq.length>1 then
+    table.insert(self.memory,json.encode(self.seq.data))
+  end
+
+  local scale=musicutil.generate_scale(params:get("root_note")%12,scale_names[params:get("scale_mode")],12)
+  local root_index=params:get("root_note")
+  for i,v in ipairs(scale) do
+    if v==params:get("base_note") then
+      root_index=i
+    end
+  end
+
   local seqs={}
   for k,p in pairs(self.p) do
     seqs[k]=p.m:sequence(n)
@@ -126,7 +145,6 @@ function Design:sequence(n,changes)
   local notes={}
   local legatos={}
   local root_choose={0,-2,-3,1}
-  local root_index=self.root_index -- + root_choose[math.random(1,#root_choose)]
   local last_lead_note=root_index
   local last_bass_note=root_index
   for i=1,n do
@@ -141,7 +159,7 @@ function Design:sequence(n,changes)
       last_lead_note=note_index
       legato=seqs["lead_note"][i]
     end
-    local note=self.scale[note_index]+(seqs["bass_or_lead"][i]==1 and 12 or 0)
+    local note=scale[note_index]+(seqs["bass_or_lead"][i]==1 and 12 or 0)
     table.insert(notes,note)
     table.insert(legatos,legato)
   end
@@ -164,20 +182,22 @@ function Design:sequence(n,changes)
   end
 end
 
-function Design:encode()
+function Design:dump()
   local d={}
-  for _,key in ipairs(self.save) do
-    d[key]=self[key]
+  for name,p in pairs(self.p) do
+    d[name]=p.m:dump()
   end
+  d["memory"]=self.memory
   return json.encode(d)
 end
 
-function Design:decode(s)
+function Design:load(s)
   local d=json.decode(s)
   if d~=nil then
-    for _,k in ipairs(self.save) do
-      self[k]=d[k]
+    for name,_ in pairs(self.p) do
+      self.p[name].m:load(d[name])
     end
+    self.memory=d["memory"]
   end
 end
 
@@ -256,7 +276,7 @@ function Design:draw_matrix()
       local y=32
       local r=17
       if i==sel[1] and i+1==sel[2] then
-        screen.line_width(2)
+        screen.line_width(3)
       else
         screen.line_width(1)
       end
@@ -276,7 +296,7 @@ function Design:draw_matrix()
     local y=32+11
     local r=42
     if 1==sel[1] and 3==sel[2] then
-      screen.line_width(2)
+      screen.line_width(3)
     else
       screen.line_width(1)
     end
@@ -298,7 +318,7 @@ function Design:draw_matrix()
       local y=32
       local r=5
       if i==sel[1] and i==sel[2] then
-        screen.line_width(2)
+        screen.line_width(3)
       else
         screen.line_width(1)
       end
@@ -329,7 +349,7 @@ function Design:draw_matrix()
       local y=32
       local r=17
       if i+1==sel[1] and i==sel[2] then
-        screen.line_width(2)
+        screen.line_width(3)
       else
         screen.line_width(1)
       end
@@ -349,11 +369,11 @@ function Design:draw_matrix()
     local y=32-12
     local r=42
     if 3==sel[1] and 1==sel[2] then
-      screen.line_width(2)
+      screen.line_width(3)
     else
       screen.line_width(1)
     end
-    screen.level(math.floor(util.linlin(0,1,2,15,m[3][1])))
+    screen.level(math.floor(util.linexp(0,1,2,15,m[3][1])))
     screen.arc(x,y,r,pi*4.7/4+pi,pi*0.81)
     screen.stroke()
     screen.move(24,44)
@@ -400,7 +420,7 @@ function Design:draw_matrix()
     local y=32+11
     local r=42
     if 1==sel[1] and 2==sel[2] then
-      screen.line_width(2)
+      screen.line_width(3)
     else
       screen.line_width(1)
     end
@@ -422,7 +442,7 @@ function Design:draw_matrix()
       local y=32
       local r=5
       if i==sel[1] and i==sel[2] then
-        screen.line_width(2)
+        screen.line_width(3)
       else
         screen.line_width(1)
       end
@@ -442,7 +462,7 @@ function Design:draw_matrix()
     local y=32-12
     local r=42
     if 2==sel[1] and 1==sel[2] then
-      screen.line_width(2)
+      screen.line_width(3)
     else
       screen.line_width(1)
     end

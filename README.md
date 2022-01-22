@@ -5,7 +5,7 @@ generative acid basslines.
 
 ![meme](/img/meme.png)
 
-been listening to acid music and thinking about markov chains. I previously made a [jazz piano accompaniment with markov chains](https://github.com/schollz/pianoai) and saw acid house as an interesting genre to also try applying stateless logic for generating believable sequences. whether this is believable "acid" music or not...debatable.
+lately I've been listening to acid music and thinking about markov chains. previously I used markov chains to make a [jazz piano accompaniment](https://github.com/schollz/pianoai). I heard acid house as an interesting genre to also try applying stateless logic for generating believable sequences. whether this is believable "acid" music or not is...debatable.
 
 
 

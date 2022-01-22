@@ -22,6 +22,7 @@ s=require("sequins")
 mm=include("acid-test/lib/mm")
 design=include("acid-test/lib/design")
 musicutil=require("musicutil")
+hs=include('lib/halfsecond')
 
 engine.name="AcidTest"
 
@@ -39,6 +40,17 @@ function init()
   end
   design_current=1
   design_compare={1,2}
+
+  scale_names={}
+  for i=1,#musicutil.SCALES do
+    table.insert(scale_names,string.lower(musicutil.SCALES[i].name))
+  end
+  params:add{type="option",id="scale_mode",name="scale mode",
+    options=scale_names,default=5,
+  action=function() build_scale() end}
+  params:add{type="number",id="root_note",name="root note",
+    min=0,max=127,default=60,formatter=function(param) return musicutil.note_num_to_name(param:get(),true) end,
+  action=function() build_scale() end}
 
   params:add{type="control",id="bass vol",name="bass vol",controlspec=controlspec.new(-96,0,'lin',1,-6,'',1/(96)),formatter=function(v)
     local val=math.floor(util.linlin(0,1,v.controlspec.minval,v.controlspec.maxval,v.raw)*10)/10
@@ -65,12 +77,19 @@ function init()
       last_note=nil,
       name=name,
     conn=midi.connect(dev.port)})
-    for j=1,127 do
-      if midis[#midis].conn~=nil then
-        midis[#midis].conn:note_off(j)
-      end
-    end
   end
+
+  params:add{type="option",id="midi_out_device",name="midi out device",
+    options=midi_devices,default=1,action=function(x)
+      all_notes_off()
+    end
+  }
+  params:add{type="number",id="midi_out_channel",name="midi out channel",
+    min=1,max=16,default=1,action=function(x)
+      all_notes_off()
+    end
+  }
+  params:add{type="number",id="midi_portamento_cc",name="midi portamento cc",min=1,max=127,default=5}
 
   -- initialize lattice
   lattice=lattice_:new()
@@ -95,25 +114,6 @@ function init()
     division=1/16
 
   }
-  -- lattice:new_pattern{
-  --   action=function()
-  --   end,
-  --   division=1/4
-  -- }
-  -- lattice:new_pattern{
-  --   action=function()
-  --     engine.acidTest_drum("snare",0.1,0.0,0.0)
-  --   end,
-  --   division=1/2,
-  --   delay=0.5,
-  -- }
-  -- lattice:new_pattern{
-  --   action=function()
-  --     engine.acidTest_drum("hat",math.random()*0.05,0.0,0.0)
-  --   end,
-  --   division=1/16,
-  --   delay=0.5,
-  -- }
 
   clock.run(function()
     while true do
@@ -122,9 +122,23 @@ function init()
     end
   end)
 
+  hs.init()
+  all_notes_off()
+
   redraw()
   lattice:start()
 
+end
+
+function all_notes_off()
+  if midis[midi_devices[params:get("midi_out_device")]]==nil then
+    do return end
+  end
+  if midis[midi_devices[params:get("midi_out_device")]].conn~=nil then
+    for j=1,127 do
+      midis[#midis].conn:note_off(j,nil,params:get("midi_out_channel"))
+    end
+  end
 end
 
 function cleanup()
@@ -156,7 +170,8 @@ function key(k,z)
 end
 
 function play(i,v,t)
-  local m=midis[2]
+  local m=midis[midi_devices[params:get("midi_out_device")]]
+
   local do_note_off=v.legato==0 -- rest
   do_note_off=do_note_off or (v.legato==1) -- new note
   if designs[i].note_last~=nil then
@@ -174,9 +189,9 @@ function play(i,v,t)
   end
   if m~=nil then
     if v.slide then
-      m.conn:cc(5,20)
+      m.conn:cc(params:get("midi_portamento_cc"),20)
     else
-      m.conn:cc(5,0)
+      m.conn:cc(params:get("midi_portamento_cc"),0)
     end
   end
 
@@ -186,7 +201,7 @@ function play(i,v,t)
     engine["acidTest_"..t](velocity/127*util.dbamp(params:get("bass vol")),v.note,0.0,0.0,v.slide and clock.get_beat_sec()/4 or 0)
     engine["acidTest_"..t.."_gate"](1)
     if m~=nil then
-      m.conn:note_on(v.note,velocity)
+      m.conn:note_on(v.note,velocity,params:get("midi_out_channel"))
     end
     designs[i].note_last=v.note
   end
@@ -197,7 +212,7 @@ function play(i,v,t)
       -- print("note off: "..do_note_off)
       engine["acidTest_"..t.."_gate"](0)
       if m~=nil then
-        m.conn:note_off(do_note_off)
+        m.conn:note_off(do_note_off,nil,params:get("midi_out_channel"))
       end
       designs[i].note_last=nil
     end

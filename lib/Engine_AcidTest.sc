@@ -23,14 +23,14 @@ Engine_AcidTest : CroneEngine {
 			var snd,snd2,y,z;
 
 			// delay
-			snd = In.ar(inDelay,2);
-			snd = CombC.ar(
-				snd,
-				2,
-				secondsPerBeat*delayBeats,
-				secondsPerBeat*delayBeats*LinLin.kr(delayFeedback,0,1,2,128),// delayFeedback should vary between 2 and 128
-			); 
-			Out.ar(out,snd);
+			// snd = In.ar(inDelay,2);
+			// snd = CombC.ar(
+			// 	snd,
+			// 	2,
+			// 	secondsPerBeat*delayBeats,
+			// 	secondsPerBeat*delayBeats*LinLin.kr(delayFeedback,0,1,2,128),// delayFeedback should vary between 2 and 128
+			// ); 
+			// Out.ar(out,snd);
 
 			// reverb
 			snd2 = In.ar(inReverb,2);

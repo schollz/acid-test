@@ -23,7 +23,7 @@ simply use K2/K3 to generate/modify sequences.
 - K2 modifies current sequence
 - K3 generates new sequence
 
-you can have sequences modify themselves and evolve in a completely generative way by modifying `PARAMS > sequences > evolution period`
+you can have sequences modify themselves and evolve in a completely generative way by modifying `PARAMS > sequences > evolve`.
 
 each time you generate/modify a sequence, it creates a saved sequence which you can recall.
 

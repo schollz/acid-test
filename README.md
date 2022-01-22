@@ -2,20 +2,44 @@
 
 generative acid basslines.
 
-
 ![meme](/img/meme.png)
 
 lately I've been listening to acid music and thinking about markov chains. previously I used markov chains to make a [jazz piano accompaniment](https://github.com/schollz/pianoai). it seemed to me that acid house basslines amenable to applying stateless logic for generating believable sequences. whether this is believable acid music or not is...debatable.
 
-
+this script started off as a literal "test" to do A/B testing on different meta-parameters of the markov chains for exploring the parameter space.
 
 ## Requirements
 
 - norns
+- midi (optional)
+- crow (optional)
 
 ## Documentation
 
-the script essentially plays generatively by generating 16-note sequences based on 9 markov chains. the notes generated will either play in the build-in 303-style engine or can be output to the midi synth of your choice.
+### quick start
+
+simply use K2/K3 to generate/modify sequences.
+
+- K2 modifies current sequence
+- K3 generates new sequence
+
+you can have sequences modify themselves and evolve in a completely generative way by modifying `PARAMS > sequences > evolution period`
+
+each time you generate/modify a sequence, it creates a saved sequence which you can recall.
+
+- K1+E1 selects saved sequence
+- K1+K3 loads saved sequence
+
+### not-quick start
+
+sequences are generated based on the transition probabilities in the markov chains. you can edit this properties to create your own style of generative acid basslines.
+
+- E1 selects markov chain
+- E2 selects transition
+- E3 changes transition probability
+
+
+the 16-note sequences based on 9 markov chains. the notes generated will either play in the build-in 303-style engine or can be output to the midi synth of your choice.
 
 this script assumes you have some basic understanding for a markov chain! you can get a lot of info and examples about markov chains [here](https://en.wikipedia.org/wiki/Markov_chain#Examples). feel free to ask questions.
 

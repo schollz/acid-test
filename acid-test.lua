@@ -9,7 +9,7 @@
 --
 -- K2 modifies current sequence
 -- K3 generates new sequence
--- E1 selects property
+-- E1 selects markov chain
 -- E2 selects transition
 -- E3 changes transition probability
 -- K1+E1 selects saved sequence
@@ -58,9 +58,15 @@ function init()
   end
 
   params:add_separator("acid test")
-  params:add_group("scale",4)
+  params:add_group("sequences",6)
+  params:add{type="number",id="sequence_length",name="sequence length",min=1,max=256,default=16}
+  local evolutions={"none","every beat"}
+  for i=2,128 do
+    table.insert(evolutions,"every "..i.." beats")
+  end
+  params:add_option("evolve","evolve",evolutions)
   params:add{type="option",id="scale_mode",name="scale mode",
-    options=scale_names,default=5,
+    options=scale_names,default=1,
   action=function() build_scale() end}
   params:add{type="number",id="root_note",name="root note",
     min=0,max=127,default=60,formatter=function(param) return musicutil.note_num_to_name(param:get(),true) end,
@@ -114,6 +120,11 @@ function init()
       elseif tt%4==0 then
         engine.acidTest_drum("snare",util.dbamp(params:get("snare vol")),0.0,0.0)
       end
+      if params:get("evolve")>1 then
+        if tt%(4*params:get("evolve"))==0 then
+          designs[i]:sequence(params:get("sequence_length"),1)
+        end
+      end
       local v=designs[1].seq()
       if next(v)==nil then
         do
@@ -137,7 +148,7 @@ function init()
   designs={}
   for i=1,2 do
     table.insert(designs,design:new())
-    designs[i]:sequence(16)
+    designs[i]:sequence(params:get("sequence_length"))
   end
 
   -- setup saving and loading
@@ -225,10 +236,10 @@ function key(k,z)
     end
   else
     if k==2 and z==1 then
-      designs[1]:sequence(16,math.random(1,2))
+      designs[1]:sequence(params:get("sequence_length"),math.random(1,2))
       fade_msg("seq "..(#designs[1].memory).." mut")
     elseif k==3 and z==1 then
-      designs[1]:sequence(16)
+      designs[1]:sequence(params:get("sequence_length"))
       fade_msg("seq "..(#designs[1].memory).." new")
     end
   end

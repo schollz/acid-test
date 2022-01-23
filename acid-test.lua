@@ -9,11 +9,13 @@
 --
 -- K2 modifies current sequence
 -- K3 generates new sequence
+-- K1+E1 selects saved sequence
+-- K1+K3 loads saved sequence
+-- K1+K2 toggles markov mode
+-- in markov mode:
 -- E1 selects markov chain
 -- E2 selects transition
 -- E3 changes transition probability
--- K1+E1 selects saved sequence
--- K1+K3 loads saved sequence
 
 if not string.find(package.cpath,"/home/we/dust/code/acid-test/lib/") then
   package.cpath=package.cpath..";/home/we/dust/code/acid-test/lib/?.so"
@@ -32,6 +34,7 @@ note_last=nil
 fade_text=""
 fade_time=0
 shift=false
+markov_mode=false
 
 function init()
   -- setup midi
@@ -211,12 +214,14 @@ function enc(k,d)
       fade_msg("seq "..designs[1].memsel)
     end
   else
-    if k==1 then
-      designs[1]:selp_delta(d)
-    elseif k==2 then
-      designs[1]:sel_delta(d)
-    elseif k==3 then
-      designs[1]:val_delta(d)
+    if markov_mode then
+      if k==1 then
+        designs[1]:selp_delta(d)
+      elseif k==2 then
+        designs[1]:sel_delta(d)
+      elseif k==3 then
+        designs[1]:val_delta(d)
+      end
     end
   end
 end
@@ -227,9 +232,11 @@ function key(k,z)
     do return end
   end
   if shift then
-    if k==3 and z==1 then
+    if k==3 and z==1 and markov_mode then
       designs[1]:load_mem()
       fade_msg("loaded seq "..designs[1].memsel)
+    elseif k==2 and z==1 then
+      markov_mode=not markov_mode
     end
   else
     if k==2 and z==1 then
@@ -313,10 +320,45 @@ end
 
 function redraw()
   screen.clear()
-  for i=1,2 do
-    designs[1]:draw_matrix()
+  if markov_mode then
+    for i=1,2 do
+      designs[1]:draw_matrix()
+    end
+  else
+    screen.aa(0)
+    local note_mm={1000,-1}
+    for i,v in ipairs(designs[1].seq.data) do
+      if v.note>note_mm[2] then
+        note_mm[2]=v.note
+      elseif v.note<note_mm[1] then
+        note_mm[1]=v.note
+      end
+    end
+    local n=designs[1].seq.length
+    local w=math.floor(128/n)
+    local last_n=32
+    for i,v in ipairs(designs[1].seq.data) do
+      local n=math.floor(util.linlin(note_mm[1],note_mm[2],60,4,v.note))
+      if i>1 then
+        screen.level(1)
+        screen.line_width(1)
+        screen.move((i-1)*w-w/2,last_n)
+        screen.line(i*w-w/2,n)
+        screen.stroke()
+      end
+      last_n=n
+    end
+    for i,v in ipairs(designs[1].seq.data) do
+      local n=math.floor(util.linlin(note_mm[1],note_mm[2],60,4,v.note))
+      if v.legato>0 then
+        screen.level(i==designs[1].seq.ix and 15 or 5)
+        screen.line_width(v.accent and 4 or 2)
+        screen.move((i-1)*w+(v.legato==1 and 2 or 0),n)
+        screen.line(i*w,n+(v.slide and 3 or 0))
+        screen.stroke()
+      end
+    end
   end
-
   if fade_time>0 then
     fade_time=fade_time-1
     screen.move(2,64-2)

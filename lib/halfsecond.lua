@@ -7,7 +7,7 @@ function sc.init()
   audio.level_cut(1.0)
   audio.level_adc_cut(1)
   audio.level_eng_cut(1)
-  softcut.level(1,1.0)
+  softcut.level(1,0)
   softcut.level_slew_time(1,0.25)
   softcut.level_input_cut(1,1,1.0)
   softcut.level_input_cut(2,1,1.0)
@@ -33,8 +33,8 @@ function sc.init()
   softcut.filter_rq(1,2.0);
 
   params:add_group("delay",4)
-  params:add{id="delay",name="delay",type="control",
-    controlspec=controlspec.new(0,1,'lin',0,0.5,""),
+  params:add{id="delay_amt",name="delay",type="control",
+    controlspec=controlspec.new(0,1,'lin',0,0.0,""),
   action=function(x) softcut.level(1,x) end}
   params:add{id="delay_rate",name="delay rate",type="control",
     controlspec=controlspec.new(0.5,2.0,'lin',0,1,""),

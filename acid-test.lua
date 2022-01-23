@@ -66,14 +66,11 @@ function init()
   end
   params:add_option("evolve","evolve",evolutions)
   params:add{type="option",id="scale_mode",name="scale mode",
-    options=scale_names,default=1,
-  action=function() build_scale() end}
+  options=scale_names,default=1}
   params:add{type="number",id="root_note",name="root note",
-    min=0,max=127,default=60,formatter=function(param) return musicutil.note_num_to_name(param:get(),true) end,
-  action=function() build_scale() end}
+  min=0,max=127,default=60,formatter=function(param) return musicutil.note_num_to_name(param:get(),true) end}
   params:add{type="number",id="base_note",name="base note",
-    min=0,max=127,default=57,formatter=function(param) return musicutil.note_num_to_name(param:get(),true) end,
-  action=function() build_scale() end}
+  min=0,max=127,default=57-24,formatter=function(param) return musicutil.note_num_to_name(param:get(),true) end}
   params:add{type="number",id="velocity_spread",name="velocity spread",min=1,max=30,default=5}
 
   params:add_group("engine",4)
@@ -122,7 +119,7 @@ function init()
       end
       if params:get("evolve")>1 then
         if tt%(4*params:get("evolve"))==0 then
-          designs[i]:sequence(params:get("sequence_length"),1)
+          designs[1]:sequence(params:get("sequence_length"),1)
         end
       end
       local v=designs[1].seq()

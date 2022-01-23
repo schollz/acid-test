@@ -232,7 +232,7 @@ function key(k,z)
     do return end
   end
   if shift then
-    if k==3 and z==1 and markov_mode then
+    if k==3 and z==1 then
       designs[1]:load_mem()
       fade_msg("loaded seq "..designs[1].memsel)
     elseif k==2 and z==1 then

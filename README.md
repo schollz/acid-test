@@ -34,6 +34,9 @@ each time you generate/modify a sequence, it creates a saved sequence which you 
 
 sequences are generated based on the transition probabilities in the markov chains. you can edit this properties to create your own style of generative acid basslines.
 
+to enter the markov-chain editing mode hit K1+K2
+
+- K1+K2 toggles markov chain editing mode
 - E1 selects markov chain
 - E2 selects transition
 - E3 changes transition probability

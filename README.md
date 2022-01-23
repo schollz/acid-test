@@ -18,6 +18,8 @@ this script started off as a literal "test" to do A/B testing on different meta-
 
 ### quick start
 
+![acid test](img/acid-test2.png)
+
 simply use K2/K3 to generate/modify sequences.
 
 - K2 modifies current sequence

@@ -25,14 +25,14 @@ simply use K2/K3 to generate/modify sequences.
 - K2 modifies current sequence
 - K3 generates new sequence
 
-you can have sequences modify themselves and evolve in a completely generative way by modifying `PARAMS > sequences > evolve`.
+you can have sequences modify themselves and evolve by changing the parameter `PARAMS > sequences > evolve`.
 
 each time you generate/modify a sequence, it creates a saved sequence which you can recall.
 
 - K1+E1 selects saved sequence
 - K1+K3 loads saved sequence
 
-### not-quick start
+### editing markov chains (not-so-quick)
 
 sequences are generated based on the transition probabilities in the markov chains. you can edit this properties to create your own style of generative acid basslines.
 
@@ -46,9 +46,9 @@ to enter the markov-chain editing mode hit K1+K2
 
 the 16-note sequences based on 9 markov chains. the notes generated will either play in the build-in 303-style engine or can be output to the midi synth of your choice.
 
-this script assumes you have some basic understanding for a markov chain! you can get a lot of info and examples about markov chains [here](https://en.wikipedia.org/wiki/Markov_chain#Examples). feel free to ask questions.
+this script assumes you have some basic understanding for a markov chain. pretty much all you need to know can be understood [here](https://en.wikipedia.org/wiki/Markov_chain#Examples). feel free to ask questions.
 
-each step in a sequence has similar properties to the 303 sequencer in that it has three parameters: a note, a slide toggle, and an accent togger. each step in the sequence has these three parameters determined based on the state of a markov chain. the transitions between the states of the markov chain are under your control. use E1 to select an markov chain property and use E2 to select a transition in that property. then use E3 to modifty the probability of that transition. **the brighter the transition arrow, the higher the probability**. 
+each step in a sequence has similar properties to the 303 sequencer in that it has three parameters: a note, a slide toggle, and an accent toggle. each step in the sequence has these three parameters determined based on the state of a markov chain. the transitions between the states of the markov chain are under your control. use E1 to select an markov chain property and use E2 to select a transition in that property. then use E3 to modifty the probability of that transition. **the brighter the transition arrow, the higher the probability**. 
 
 the combination of these 9 properties are then combined to generate the sequence.
 
@@ -75,7 +75,7 @@ this property transitions between "bass" and "lead". the generator actually gene
 ### bass / lead coef+mult
 
 
-the bass and lead parts each use two properties to generate a single note. the starting note of each sequence is the "base note" defined in the parameters. the base noteis then increased by `coef x mult` at each step in the sequence where `coef` and `mult` are determined by the current state in both of those markov chains. for example, if the `coef` state is `2` and the `mult` is `-1` then the sequence will transition `-2` notes in the scale.
+the bass and lead parts each use two properties to generate a single note. the starting note of each sequence is the "base note" defined in the parameters. the base note is then increased by `coef x mult` at each step in the sequence where `coef` and `mult` are determined by the current state in both of those markov chains. for example, if the `coef` state is `2` and the `mult` is `-1` then the sequence will transition `-2` notes in the scale.
 
 
 ![bassorlead](/img/basscoef.png)

@@ -6,7 +6,8 @@ generative acid basslines.
 
 lately I've been listening to acid music and thinking about markov chains. previously I used markov chains to make a [jazz piano accompaniment](https://github.com/schollz/pianoai). it seemed to me that acid house basslines amenable to applying stateless logic for generating believable sequences. whether this is believable acid music or not is...debatable.
 
-this script started off as a literal "test" to do A/B testing on different meta-parameters of the markov chains for exploring the parameter space.
+this script started off as a literal "test" to do A/B testing on different meta-parameters of the markov chains for exploring the parameter space, as there are controls to edit each individual markov chain. the output can be sent to midi, crow, or the builtin engine. the builtin engine is forked from [bernhard](https://sccode.org/bernhard)'s [sc code](https://sccode.org/1-5d8) which itself is forked from [by_otophilia's code](https://www.scribd.com/document/424490809/Acid-Otophilia).
+
 
 ## Requirements
 
@@ -97,6 +98,9 @@ the legato of the note will be determined by the "bass note"  property (for bass
 
 ![leadnote](/img/leadnote.png)
 
+## crow
+
+crow is supported. output 1 is pitch which will be slewed according to slides. output 2 is the gate (0-5v).
 
 ## Install
 

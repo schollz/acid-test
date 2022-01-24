@@ -268,7 +268,7 @@ function play(i,v,t)
     do_note_off=nil
   end
 
-  local velocity=math.random(60-params:get("velocity_spread"),60+params:get("velocity_spread")) -- TODO: make the +5 optional
+  local velocity=math.random(60-params:get("velocity_spread"),60+params:get("velocity_spread"))
   if v.accent then
     velocity=velocity+math.random(30-params:get("velocity_spread"),30+params:get("velocity_spread"))
   end
@@ -290,9 +290,9 @@ function play(i,v,t)
     end
     if params:get("out_crow")==2 then
       -- add slide
-      crow.slew[1]=v.slide and clock.get_beat_sec()/4 or 0 -- TODO figure out how to do crow slew
+      crow.output[1].slew=v.slide and clock.get_beat_sec()/4 or 0
       crow.output[1].volts=(v.note-60)/12
-      crow.output[2].execute()
+      crow.output[2].volts=5
     end
     if params:get("out_crow_jf")==2 then
       crow.ii.jf.play_note((v.note-60)/12,5)
@@ -308,6 +308,9 @@ function play(i,v,t)
     if designs[i].note_last~=nil then
       if params:get("out_engine")==2 then
         engine["acidTest_"..t.."_gate"](0)
+      end
+      if params:get("out_crow")==2 then
+        crow.output[2].volts=0
       end
       if m~=nil then
         m.conn:note_off(do_note_off,nil,params:get("midi_out_channel"))

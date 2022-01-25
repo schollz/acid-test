@@ -40,6 +40,7 @@ fade_time=0
 shift=false
 markov_mode=false
 sel_note=1
+disable_transport=false
 
 function init()
   -- setup midi
@@ -202,16 +203,23 @@ function all_notes_off()
 end
 
 function clock.transport.start()
+  if disable_transport then
+    do return end
+  end
   print("transport start")
   toggle_playing(true)
 end
 
 function clock.transport.stop()
+  if disable_transport then
+    do return end
+  end
   print("transport stop")
   toggle_playing(false)
 end
 
 function toggle_playing(on)
+  disable_transport=true
   if on~=nil then
     if on then
       lattice:hard_restart()
@@ -219,6 +227,7 @@ function toggle_playing(on)
       lattice:stop()
       all_notes_off()
     end
+    disable_transport=false
     do return end
   end
   if lattice.enabled then
@@ -227,6 +236,7 @@ function toggle_playing(on)
   else
     lattice:hard_restart()
   end
+  disable_transport=false
 end
 
 function cleanup()

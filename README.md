@@ -33,7 +33,12 @@ each time you generate/modify a sequence, it creates a saved sequence which you 
 - K1+E1 selects saved sequence
 - K1+K3 loads saved sequence
 
-### editing markov chains (not-so-quick)
+you can also manually edit notes in the sequence
+
+- E2 selects a note
+- E3 changes a note
+
+### editing markov chains
 
 sequences are generated based on the transition probabilities in the markov chains. you can edit this properties to create your own style of generative acid basslines.
 

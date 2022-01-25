@@ -35,6 +35,7 @@ fade_text=""
 fade_time=0
 shift=false
 markov_mode=false
+sel_note=1
 
 function init()
   -- setup midi
@@ -196,6 +197,34 @@ function all_notes_off()
   end
 end
 
+function clock.transport.start()
+  print("transport start")
+  toggle_playing(true)
+end
+
+function clock.transport.stop()
+  print("transport stop")
+  toggle_playing(false)
+end
+
+function toggle_playing(on)
+  if on~=nil then
+    if on then
+      lattice:hard_restart()
+    else
+      lattice:stop()
+      all_notes_off()
+    end
+    do return end
+  end
+  if lattice.enabled then
+    lattice:stop()
+    all_notes_off()
+  else
+    lattice:hard_restart()
+  end
+end
+
 function cleanup()
   for _,m in pairs(midis) do
     for j=1,127 do
@@ -221,6 +250,13 @@ function enc(k,d)
         designs[1]:sel_delta(d)
       elseif k==3 then
         designs[1]:val_delta(d)
+      end
+    else
+      if k==1 then
+      elseif k==2 then
+        sel_note=util.clamp(sel_note+d,1,designs[1].seq.length)
+      elseif k==3 then
+        designs[1].seq.data[sel_note].note=util.clamp(designs[1].seq.data[sel_note].note+d,20,120)
       end
     end
   end
@@ -350,6 +386,13 @@ function redraw()
         screen.stroke()
       end
       last_n=n
+    end
+    if designs[1].seq~=nil and designs[1].seq.data~=nil then
+      local n=math.floor(util.linlin(note_mm[1],note_mm[2],60,4,designs[1].seq.data[sel_note].note))
+      screen.level(15)
+      screen.line_width(1)
+      screen.rect((sel_note-1)*w+1,n-3,w,7)
+      screen.fill()
     end
     for i,v in ipairs(designs[1].seq.data) do
       local n=math.floor(util.linlin(note_mm[1],note_mm[2],60,4,v.note))

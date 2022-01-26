@@ -4,7 +4,7 @@ generative acid basslines.
 
 ![meme](/img/meme.png)
 
-lately I've been listening to acid music and thinking about markov chains. previously I used markov chains to make a [jazz piano accompaniment](https://github.com/schollz/pianoai). it seemed to me that acid house basslines might be amenable to applying stateless logic for generating believable sequences. whether this results in "believable" acid music is up to you, but worth it for me to give it a try.
+lately I've been listening to acid house music and thinking about markov chains. previously I used markov chains to make a [jazz piano accompaniment](https://github.com/schollz/pianoai). it seemed to me that acid house basslines might be amenable to applying stateless logic for generating believable sequences. whether this results in "believable" acid music is up to you, but worth it for me to give it a try.
 
 this script started off as a literal "test" to do A/B explorations on different meta-parameters of the markov chains, but its too slow to sample parameter space by listening. so instead, I decided that the markov chains might be intuitive enough to edit directly, and I added controls to edit each individual markov chain. the output can be sent to midi, crow, or the builtin engine. the builtin engine is forked from [bernhard](https://sccode.org/bernhard)'s [sc code](https://sccode.org/1-5d8) which itself is forked from [by_otophilia's code](https://www.scribd.com/document/424490809/Acid-Otophilia) for a 303 emulator in SuperCollider.
 
@@ -42,7 +42,7 @@ you can also manually edit notes in the sequence
 
 sequences are generated based on the transition probabilities in the markov chains. you can edit these properties to create your own style of generative acid basslines.
 
-to enter the markov-chain editing mode hit K1+K2
+to enter the markov-chain editing mode hit K1+K2. all controls are as follows:
 
 - K1+K2 toggles markov chain editing mode
 - E1 selects markov chain
@@ -52,7 +52,7 @@ to enter the markov-chain editing mode hit K1+K2
 
 this next part assumes a basic understanding of a markov chain. pretty much all you need to know can be learned by reading [these examples](https://en.wikipedia.org/wiki/Markov_chain#Examples). feel free to ask questions.
 
-each step in a sequence is determined based on the states of 9 markov chains. the states of the markov chains are also the only thing that determines the next state (i.e. "memoryless"). each step in a sequence has similar properties to the 303 sequencer in that it has three parameters: a note, a slide toggle, and an accent toggle. each step in the sequence has these three parameters determined based on the state of a markov chain and discussed in detail below.
+the generation of each step in a sequence is determined based on the states of 9 markov chains. the states of the markov chains change based on only the previous state (i.e. "memoryless"). each step in a sequence has similar properties to the 303 sequencer in that it has three parameters: a note, a slide toggle, and an accent toggle. each step in the sequence has these three parameters determined based on the state of a markov chain and discussed in detail below.
 
 the transitions between the states of the markov chain are under your control. use E1 to select an markov chain property and use E2 to select a transition in that property. then use E3 to modify the probability of that transition. **the brighter the transition arrow, the higher the probability**. the combination of these 9 markov chains are then combined to generate the sequence.
 
@@ -70,7 +70,7 @@ transitions between "no" and "yes". when the state of this markov chain is 'yes'
 
 #### bass or lead
 
-in designing this sequencer I felt that I had to separate between "bass" and "lead" notes in the bassline - though technically the whole thing is a bassline, the "bass" notes typically being an octave below. I felt that acid basslines get part of the signature sound by oscillating between two intertwined melodies that are stacked vertically. so there are separate markov chains for the "bass" and "lead", which are combined using this "bass or lead" property.
+in designing this sequencer I felt that I had to separate between "bass" and "lead" notes in the bassline - though technically the whole thing is a bassline, the "bass" notes typically being an octave below. I felt that acid basslines get part of the signature sound by oscillating between two intertwined melodies that are loosely mirrored across an octave. so there are separate markov chains for the "bass" and "lead", which are combined using this "bass or lead" property.
 
 this property transitions between "bass" and "lead". the generator actually generates twice as many notes as requested - i.e. one entire set of bass notes and one entire set of lead notes. but will only select either based on the state of this property.
 

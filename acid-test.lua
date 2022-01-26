@@ -56,10 +56,10 @@ function init()
     name=name:gsub("-","")
     print("connected to "..name)
     table.insert(midi_devices,name)
-    table.insert(midis,{
+    midis[name]={
       last_note=nil,
       name=name,
-    conn=midi.connect(dev.port)})
+    conn=midi.connect(dev.port)}
   end
 
   scale_names={}
@@ -95,6 +95,9 @@ function init()
 
   params:add_group("engine",4)
   params:add_option("out_engine","engine output",{"no","yes"},midi_default==1 and 2 or 1)
+  params:set_action("out_engine",function(x)
+    params:set("bass vol",x==1 and -96 or -6)
+  end)
   params:add{type="control",id="bass vol",name="bass vol",controlspec=controlspec.new(-96,0,'lin',1,(midi_default==1 and-6 or-96),'',1/(96)),formatter=function(v)
     local val=math.floor(util.linlin(0,1,v.controlspec.minval,v.controlspec.maxval,v.raw)*10)/10
     return ((val<0) and "" or "+")..val.." dB"
@@ -124,13 +127,35 @@ function init()
     end
   }
   params:add{type="number",id="midi_portamento_cc",name="midi portamento cc",min=1,max=127,default=5}
+  local pdefaults={
+    {74,67,100},
+    {23,0,10},
+    {71,32,68},
+  }
   for i=1,3 do
-    params:add{type="number",id="midi_lfo_cc"..i,name="midi lfo "..i.." cc",min=0,max=127,default=0}
-    params:add{type="number",id="midi_lfo_min"..i,name="midi lfo "..i.." min",min=0,max=127,default=0}
-    params:add{type="number",id="midi_lfo_max"..i,name="midi lfo "..i.." max",min=0,max=127,default=0}
+    params:add{type="number",id="midi_lfo_cc"..i,name="midi lfo "..i.." cc",min=0,max=127,default=pdefaults[i][1]}
+    params:add{type="number",id="midi_lfo_min"..i,name="midi lfo "..i.." min",min=0,max=127,default=pdefaults[i][2]}
+    params:add{type="number",id="midi_lfo_max"..i,name="midi lfo "..i.." max",min=0,max=127,default=pdefaults[i][3]}
     params:add{type="control",id="midi_lfo_period"..i,name="midi lfo "..i.." period",
     controlspec=controlspec.new(0.1,60,'lin',0.1,math.random(5,12),'s',0.1/60)}
   end
+
+  hs.init()
+
+  tape_ready=false
+  -- TODO replace this part to use softcut instead
+  -- params:add_file("tapefile","load synced tape","/home/we/dust/audio/")
+  -- params:set_action("tapefile",function(x)
+  --   if x=="/home/we/dust/audio/" or x=="/home/we/dust/audio" then
+  --     do return end
+  --   end
+  --   print("loading tape: "..x)
+  --   audio.tape_play_open(x)
+  --   clock.run(function()
+  --     clock.sleep(1)
+  --     tape_ready=true
+  --   end)
+  -- end)
 
   -- initialize lattice
   lattice=lattice_:new()
@@ -144,20 +169,26 @@ function init()
         lattice_pattern:set_division(current_division)
       end
       tt=tt+1
+      if tt%16==0 and tape_ready then
+        tape_ready=false 
+        audio.tape_play_start()
+      end
       if tt%8==0 then
         -- do cc's
         local t=clock.get_beat_sec()*clock.get_beats()
         for i=1,3 do
-          local ccval=util.linlin(-1,1,params:get("midi_lfo_min"..i),params:get("midi_lfo_max"..i),
-          math.sin(2*3.14159*t/params:get("midi_lfo_period"..i)))
-          ccval=math.floor(util.round(ccval))
-          if ccval~=last_midi_cc[i] then
-            if midis[midi_devices[params:get("midi_out_device")]]~=nil and
-              midis[midi_devices[params:get("midi_out_device")]].conn~=nil then
-              midis[midi_devices[params:get("midi_out_device")]].conn:cc(params:get("midi_lfo_cc"..i),ccval)
+          if params:get("midi_lfo_cc"..i)>0 then 
+            local ccval=util.linlin(-1,1,params:get("midi_lfo_min"..i),params:get("midi_lfo_max"..i),
+            math.sin(2*3.14159*t/params:get("midi_lfo_period"..i)))
+            ccval=math.floor(util.round(ccval))
+            if ccval~=last_midi_cc[i] then
+              if midis[midi_devices[params:get("midi_out_device")]]~=nil and
+                midis[midi_devices[params:get("midi_out_device")]].conn~=nil then
+                midis[midi_devices[params:get("midi_out_device")]].conn:cc(params:get("midi_lfo_cc"..i),ccval)
+              end
             end
+            last_midi_cc[i]=ccval
           end
-          last_midi_cc[i]=ccval
         end
         -- engine.acidTest_drum("kick",util.dbamp(params:get("kick vol")),0.0,0.0)
         -- elseif tt%4==0 then
@@ -227,9 +258,10 @@ function init()
     for i,s in ipairs(data) do
       designs[i]:load(s)
     end
+    -- TODO: load latest saved
   end
 
-  hs.init()
+
   all_notes_off()
 
   redraw()
@@ -242,9 +274,10 @@ function all_notes_off()
     do return end
   end
   if midis[midi_devices[params:get("midi_out_device")]].conn~=nil then
-    for j=1,127 do
-      midis[#midis].conn:note_off(j,nil,params:get("midi_out_channel"))
-    end
+    local m=midis[midi_devices[params:get("midi_out_device")]].conn
+    for j=20,80 do
+      m:note_off(j,nil,params:get("midi_out_channel"))
+    end      
   end
 end
 
@@ -270,6 +303,7 @@ function toggle_playing(on)
     clock.sleep(1)
     disable_transport=false
   end)
+  designs[1].seq.ix=0
   if on~=nil then
     if on then
       lattice:hard_restart()
@@ -288,6 +322,7 @@ function toggle_playing(on)
 end
 
 function cleanup()
+  audio.tape_play_stop()
   for _,m in pairs(midis) do
     for j=1,127 do
       if m.conn~=nil then

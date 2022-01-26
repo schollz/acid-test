@@ -65,7 +65,6 @@ function Design:sel_mem(d)
   if next(self.memory)==nil then
     do return end
   end
-  print(d)
   self.memsel=util.clamp(self.memsel+d,1,#self.memory)
 end
 
@@ -123,9 +122,6 @@ function Design:sequence(n,changes)
   if changes~=nil and changes==0 then
     do return end
   end
-  if self.seq.length>1 then
-    table.insert(self.memory,json.encode(self.seq.data))
-  end
 
   local scale=musicutil.generate_scale(params:get("root_note")%12,scale_names[params:get("scale_mode")],12)
   local root_index=params:get("root_note")
@@ -180,6 +176,11 @@ function Design:sequence(n,changes)
       self.seq[math.random(1,#seq)]=seq[i]
     end
   end
+
+  if self.seq.length>1 then
+    table.insert(self.memory,json.encode(self.seq.data))
+    self.memsel=#self.memory
+  end
 end
 
 function Design:dump()
@@ -188,6 +189,7 @@ function Design:dump()
     d[name]=p.m:dump()
   end
   d["memory"]=self.memory
+  d["memsel"]=self.memsel
   return json.encode(d)
 end
 
@@ -198,6 +200,8 @@ function Design:load(s)
       self.p[name].m:load(d[name])
     end
     self.memory=d["memory"]
+    self.memsel=d["memsel"]
+    self:load_mem()
   end
 end
 

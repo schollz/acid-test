@@ -132,6 +132,11 @@ function init()
     {23,0,10},
     {71,32,68},
   }
+  pdefaults={
+    {0,67,100},
+    {0,0,10},
+    {0,32,68},
+  }
   for i=1,3 do
     params:add{type="number",id="midi_lfo_cc"..i,name="midi lfo "..i.." cc",min=0,max=127,default=pdefaults[i][1]}
     params:add{type="number",id="midi_lfo_min"..i,name="midi lfo "..i.." min",min=0,max=127,default=pdefaults[i][2]}

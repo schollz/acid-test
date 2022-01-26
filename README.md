@@ -28,7 +28,7 @@ simply use K2/K3 to generate/modify sequences.
 
 you can have sequences modify themselves and evolve by changing the parameter `PARAMS > sequences > evolve`.
 
-each time you generate/modify a sequence, it creates a saved sequence which you can recall.
+each time you generate/modify a sequence it will increase the number of modifications it makes (with a refractory period). each time you modify a sequence, it also creates a saved sequence which you can recall:
 
 - K1+E1 selects saved sequence
 - K1+K3 loads saved sequence

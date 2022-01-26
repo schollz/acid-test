@@ -2,11 +2,13 @@
 
 generative acid basslines.
 
-![meme](/img/meme.png)
+![acid-test](https://github.com/schollz/acid-test/raw/main/img/acid-test2.png)
+
+
+
+lately I've been listening to acid house music and thinking about markov chains. previously I used markov chains to make a [jazz piano accompaniment](https://github.com/schollz/pianoai). it seemed to me that acid house basslines might be amenable to applying stateless logic for generating believable sequences. whether this results in "believable" acid music is up to you, but worth it for me to give it a try.
 
 https://vimeo.com/670308126
-
-lately I've been listening to acid house music and thinking about markov chains. previously I used markov chains to make a [jazz piano accompaniment](https://github.com/schollz/pianoai) and been raeding about @tyleretters [sweet markov music](https://llllllll.co/t/markov-music-v1-0/). it seemed to me that acid house basslines might be amenable to applying stateless logic for generating believable sequences. whether this results in "believable" acid music is up to you, but worth it for me to give it a try.
 
 this script started off as a literal "test" to do A/B explorations on different meta-parameters of the markov chains, but its too slow to sample parameter space by listening. so instead, I decided that the markov chains might be intuitive enough to edit directly, and I added controls to edit each individual markov chain. the output can be sent to midi, crow, or the builtin engine. the builtin engine is forked from [bernhard](https://sccode.org/bernhard)'s [sc code](https://sccode.org/1-5d8) which itself is forked from [by_otophilia's code](https://www.scribd.com/document/424490809/Acid-Otophilia) for a 303 emulator in SuperCollider.
 
@@ -21,8 +23,6 @@ this script started off as a literal "test" to do A/B explorations on different 
 ## Documentation
 
 ### quick start
-
-![acid test](img/acid-test2.png)
 
 simply use K2 to generate/modify sequences.
 
@@ -63,13 +63,13 @@ the transitions between the states of the markov chain are under your control. u
 
 transitions between "no" and "yes". when the state of this markov chain is 'yes', then the velocity will be increased slightly for that note.
 
-![accent](/img/accent.png)
+![accent](https://github.com/schollz/acid-test/raw/main/img/accent.png)
 
 #### slide
 
 transitions between "no" and "yes". when the state of this markov chain is 'yes', the portamento will be increased. for midi devices you can set the portamento cc in the `PARAMS > midi` section. for crow/engine output, the portamento is applied automatically through slew in the pitch.
 
-![slide](/img/slide.png)
+![slide](https://github.com/schollz/acid-test/raw/main/img/slide.png)
 
 #### bass or lead
 
@@ -77,7 +77,7 @@ in designing this sequencer I felt that I had to separate between "bass" and "le
 
 this property transitions between "bass" and "lead". the generator actually generates twice as many notes as requested - i.e. one entire set of bass notes and one entire set of lead notes. but will only select either based on the state of this property.
 
-![bassorlead](/img/bassorlead.png)
+![bassorlead](https://github.com/schollz/acid-test/raw/main/img/bassorlead.png)
 
 #### bass / lead coef+mult
 
@@ -85,24 +85,24 @@ this property transitions between "bass" and "lead". the generator actually gene
 the bass and lead parts each use two properties to generate a single note. the starting note of each sequence is the "base note" defined in the parameters. the base note is then increased by `coef x mult` at each step in the sequence where `coef` and `mult` are determined by the current state in both of those markov chains. for example, if the `coef` state is `2` and the `mult` is `-1` then the sequence will transition `-2` notes *in the scale*. the scale can be defined in the parameters.
 
 
-![bassorlead](/img/basscoef.png)
+![bassorlead](https://github.com/schollz/acid-test/raw/main/img/basscoef.png)
 
-![bassorlead](/img/bassmult.png)
+![bassorlead](https://github.com/schollz/acid-test/raw/main/img/bassmult.png)
 
 
 the lead coef+mult works the same way as the bass coef+mult, but only affects the lead notes.
 
-![bassorlead](/img/leadcoef.png)
+![bassorlead](https://github.com/schollz/acid-test/raw/main/img/leadcoef.png)
 
-![bassorlead](/img/leadmult.png)
+![bassorlead](https://github.com/schollz/acid-test/raw/main/img/leadmult.png)
 
 #### bass / lead note
 
 the legato of the note will be determined by the "bass note"  property (for bass notes) or the "lead note" property (for lead notes). if the state is "rest" then no note will be played, and any current note will be stopped. if the state is "new" then the current note will be stopped and a new note will be played. if the state is "hold" and the new note is the same as the last note, then there will be no gate, it will simply continue the note. if the new note is not the same and there is a slide, then portamento will be applied.
 
-![bassnote](/img/bassnote.png)
+![bassnote](https://github.com/schollz/acid-test/raw/main/img/bassnote.png)
 
-![leadnote](/img/leadnote.png)
+![leadnote](https://github.com/schollz/acid-test/raw/main/img/leadnote.png)
 
 ### crow
 

@@ -125,6 +125,7 @@ function init()
   lattice=lattice_:new()
 
   local tt=-1
+  local last_midi_cc={-1,-1,-1}
   lattice_pattern=lattice:new_pattern{
     action=function()
 
@@ -136,10 +137,13 @@ function init()
           local ccval=util.linlin(-1,1,params:get("midi_lfo_min"..i),params:get("midi_lfo_max"..i),
           math.sin(2*3.14159*t/params:get("midi_lfo_period"..i)))
           ccval=math.floor(util.round(ccval))
-          if midis[midi_devices[params:get("midi_out_device")]]~=nil and
-            midis[midi_devices[params:get("midi_out_device")]].conn~=nil then
-            midis[midi_devices[params:get("midi_out_device")]].conn:cc(params:get("midi_lfo_cc"..i),ccval)
+          if ccval~=last_midi_cc[i] then
+            if midis[midi_devices[params:get("midi_out_device")]]~=nil and
+              midis[midi_devices[params:get("midi_out_device")]].conn~=nil then
+              midis[midi_devices[params:get("midi_out_device")]].conn:cc(params:get("midi_lfo_cc"..i),ccval)
+            end
           end
+          last_midi_cc[i]=ccval
         end
         -- engine.acidTest_drum("kick",util.dbamp(params:get("kick vol")),0.0,0.0)
         -- elseif tt%4==0 then

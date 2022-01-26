@@ -101,7 +101,7 @@ function init()
   params:add_option("out_crow","crow output",{"no","yes"})
   params:add_option("out_crow_jf","crow jf output",{"no","yes"})
 
-  params:add_group("midi",3)
+  params:add_group("midi",3+3*4)
   params:add{type="option",id="midi_out_device",name="midi out device",
     options=midi_devices,default=midi_default,action=function(x)
       all_notes_off()
@@ -113,6 +113,13 @@ function init()
     end
   }
   params:add{type="number",id="midi_portamento_cc",name="midi portamento cc",min=1,max=127,default=5}
+  for i=1,3 do
+    params:add{type="number",id="midi_lfo_cc"..i,name="midi lfo "..i.." cc",min=0,max=127,default=0}
+    params:add{type="number",id="midi_lfo_min"..i,name="midi lfo "..i.." min",min=0,max=127,default=0}
+    params:add{type="number",id="midi_lfo_max"..i,name="midi lfo "..i.." max",min=0,max=127,default=0}
+    params:add{type="control",id="midi_lfo_period"..i,name="midi lfo "..i.." period",
+    controlspec=controlspec.new(0.1,60,'lin',0.1,math.random(5,12),'s',0.1/60)}
+  end
 
   -- initialize lattice
   lattice=lattice_:new()
@@ -120,11 +127,23 @@ function init()
   local tt=-1
   lattice_pattern=lattice:new_pattern{
     action=function()
+
       tt=tt+1
       if tt%8==0 then
-        engine.acidTest_drum("kick",util.dbamp(params:get("kick vol")),0.0,0.0)
-      elseif tt%4==0 then
-        engine.acidTest_drum("snare",util.dbamp(params:get("snare vol")),0.0,0.0)
+        -- do cc's
+        local t=clock.get_beat_sec()*clock.get_beats()
+        for i=1,3 do
+          local ccval=util.linlin(-1,1,params:get("midi_lfo_min"..i),params:get("midi_lfo_max"..i),
+          math.sin(2*3.14159*t/params:get("midi_lfo_period"..i)))
+          ccval=math.floor(util.round(ccval))
+          if midis[midi_devices[params:get("midi_out_device")]]~=nil and
+            midis[midi_devices[params:get("midi_out_device")]].conn~=nil then
+            midis[midi_devices[params:get("midi_out_device")]].conn:cc(params:get("midi_lfo_cc"..i),ccval)
+          end
+        end
+        -- engine.acidTest_drum("kick",util.dbamp(params:get("kick vol")),0.0,0.0)
+        -- elseif tt%4==0 then
+        --   engine.acidTest_drum("snare",util.dbamp(params:get("snare vol")),0.0,0.0)
       end
       if params:get("evolve")>1 then
         if tt%(4*params:get("evolve"))==0 then
@@ -140,7 +159,6 @@ function init()
       play(1,v,"bass")
     end,
     division=1/16
-
   }
 
   clock.run(function()

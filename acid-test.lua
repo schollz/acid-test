@@ -19,7 +19,7 @@
 -- in markov mode:
 -- E1 selects markov chain
 -- E2 selects transition
--- E3 changes transition probability
+-- E3 changes probability
 
 if not string.find(package.cpath,"/home/we/dust/code/acid-test/lib/") then
   package.cpath=package.cpath..";/home/we/dust/code/acid-test/lib/?.so"

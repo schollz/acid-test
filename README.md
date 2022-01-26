@@ -4,7 +4,7 @@ generative acid basslines.
 
 ![meme](/img/meme.png)
 
-lately I've been listening to acid music and thinking about markov chains. previously I used markov chains to make a [jazz piano accompaniment](https://github.com/schollz/pianoai). it seemed to me that acid house basslines might be amenable to applying stateless logic for generating believable sequences. whether this results in "believable" acid music is up to you, but worth it to me to give a try.
+lately I've been listening to acid music and thinking about markov chains. previously I used markov chains to make a [jazz piano accompaniment](https://github.com/schollz/pianoai). it seemed to me that acid house basslines might be amenable to applying stateless logic for generating believable sequences. whether this results in "believable" acid music is up to you, but worth it for me to give it a try.
 
 this script started off as a literal "test" to do A/B explorations on different meta-parameters of the markov chains, but its too slow to sample parameter space by listening. so instead, I decided that the markov chains might be intuitive enough to edit directly, and I added controls to edit each individual markov chain. the output can be sent to midi, crow, or the builtin engine. the builtin engine is forked from [bernhard](https://sccode.org/bernhard)'s [sc code](https://sccode.org/1-5d8) which itself is forked from [by_otophilia's code](https://www.scribd.com/document/424490809/Acid-Otophilia) for a 303 emulator in SuperCollider.
 
@@ -108,6 +108,10 @@ crow is supported. output 1 is pitch which will be slewed according to slides. o
 ### midi
 
 midi out can be selected in the parameters. you can also select the cc value for portamento (if your synthesizer allows it) as well as up to three LFOs that will be sent to the midi device via cc's (e.g. for filter / resonance).
+
+### saving/loading
+
+save and load via the PSETs. saving and loading should save all the sequences that you've accumulated over time.
 
 ## Install
 

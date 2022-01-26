@@ -7,16 +7,17 @@
 --
 --    ▼ instructions below ▼
 --
--- any mode:
 -- K2 modifies current sequence
 -- K3 toggles start/stop
 -- K1+E1 selects saved sequence
 -- K1+K3 loads saved sequence
 -- K1+K2 toggles markov mode
--- in note mode
+--
+-- ///     note mode   \\\
 -- E2 selects note
 -- E3 changes note
--- in markov mode:
+--
+-- ///    markov mode   \\\
 -- E1 selects markov chain
 -- E2 selects transition
 -- E3 changes probability

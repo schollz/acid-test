@@ -24,7 +24,7 @@ this script started off as a literal "test" to do A/B explorations on different 
 simply use K2/K3 to generate/modify sequences.
 
 - K2 modifies current sequence
-- K3 generates new sequence
+- K3 toggles start/stop
 
 you can have sequences modify themselves and evolve by changing the parameter `PARAMS > sequences > evolve`.
 

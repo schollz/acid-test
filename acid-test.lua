@@ -9,7 +9,7 @@
 --
 -- any mode:
 -- K2 modifies current sequence
--- K3 generates new sequence
+-- K3 toggles start/stop
 -- K1+E1 selects saved sequence
 -- K1+K3 loads saved sequence
 -- K1+K2 toggles markov mode
@@ -165,10 +165,14 @@ function init()
     division=1/16
   }
 
+  change_magnitude=0
   clock.run(function()
     while true do
       clock.sleep(1/10)
       redraw()
+      if change_magnitude>0 then
+        change_magnitude=change_magnitude-5
+      end
     end
   end)
 
@@ -242,6 +246,10 @@ end
 
 function toggle_playing(on)
   disable_transport=true
+  clock.run(function()
+    clock.sleep(1)
+    disable_transport=false
+  end)
   if on~=nil then
     if on then
       lattice:hard_restart()
@@ -249,7 +257,6 @@ function toggle_playing(on)
       lattice:stop()
       all_notes_off()
     end
-    disable_transport=false
     do return end
   end
   if lattice.enabled then
@@ -258,7 +265,6 @@ function toggle_playing(on)
   else
     lattice:hard_restart()
   end
-  disable_transport=false
 end
 
 function cleanup()
@@ -312,11 +318,18 @@ function key(k,z)
     end
   else
     if k==2 and z==1 then
-      designs[1]:sequence(params:get("sequence_length"),math.random(1,2))
-      fade_msg("seq "..(#designs[1].memory).." mut")
+      local num_to_change=util.clamp(math.random(1,2)+math.floor(change_magnitude/10),1,params:get("sequence_length"))
+      if num_to_change==params:get("sequence_length") then
+        designs[1]:sequence(params:get("sequence_length"))
+        fade_msg("seq"..(#designs[1].memory).." (all changed)")
+        change_magnitude=change_magnitude+10
+      else
+        designs[1]:sequence(params:get("sequence_length"),num_to_change)
+        fade_msg("seq"..(#designs[1].memory).." ("..num_to_change.." changed)")
+        change_magnitude=change_magnitude+40
+      end
     elseif k==3 and z==1 then
-      designs[1]:sequence(params:get("sequence_length"))
-      fade_msg("seq "..(#designs[1].memory).." new")
+      toggle_playing()
     end
   end
 end

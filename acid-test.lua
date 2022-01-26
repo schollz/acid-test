@@ -66,9 +66,13 @@ function init()
     table.insert(scale_names,string.lower(musicutil.SCALES[i].name))
   end
 
+  local debounce_sequence_length=0
   params:add_separator("acid test")
-  params:add_group("sequences",6)
+  params:add_group("sequences",7)
   params:add{type="number",id="sequence_length",name="sequence length",min=1,max=256,default=16}
+  params:set_action("sequence_length",function(x)
+    debounce_sequence_length=20
+  end)
   local evolutions={"none","every beat"}
   for i=2,128 do
     table.insert(evolutions,"every "..i.." beats")
@@ -81,6 +85,12 @@ function init()
   params:add{type="number",id="base_note",name="base note",
   min=0,max=127,default=57-24,formatter=function(param) return musicutil.note_num_to_name(param:get(),true) end}
   params:add{type="number",id="velocity_spread",name="velocity spread",min=1,max=30,default=5}
+  local division_options={"1/32","1/16","1/12","1/10","1/8","1/4","1/2","1","2"}
+  current_division=1/16
+  params:add_option("division","division",division_options,2)
+  params:set_action("division",function(x)
+    load("current_division="..division_options[x])()
+  end)
 
   params:add_group("engine",4)
   params:add_option("out_engine","engine output",{"no","yes"},midi_default==1 and 2 or 1)
@@ -126,9 +136,12 @@ function init()
 
   local tt=-1
   local last_midi_cc={-1,-1,-1}
+  -- load("foo=1/16")(); print(foo)
   lattice_pattern=lattice:new_pattern{
     action=function()
-
+      if lattice_pattern.division~=current_division then
+        lattice_pattern:set_division(current_division)
+      end
       tt=tt+1
       if tt%8==0 then
         -- do cc's
@@ -162,7 +175,7 @@ function init()
       end
       play(1,v,"bass")
     end,
-    division=1/16
+    division=current_division
   }
 
   change_magnitude=0
@@ -172,6 +185,12 @@ function init()
       redraw()
       if change_magnitude>0 then
         change_magnitude=change_magnitude-5
+      end
+      if debounce_sequence_length>0 then
+        debounce_sequence_length=debounce_sequence_length-1
+        if debounce_sequence_length==0 then
+          designs[1]:sequence(params:get("sequence_length"))
+        end
       end
     end
   end)
@@ -408,6 +427,7 @@ end
 
 function redraw()
   screen.clear()
+  screen.line_cap("round")
   if markov_mode then
     for i=1,2 do
       designs[1]:draw_matrix()

@@ -69,7 +69,7 @@ function init()
 
   local debounce_sequence_length=0
   params:add_separator("acid test")
-  params:add_group("sequences",7)
+  params:add_group("sequences",8)
   params:add{type="number",id="sequence_length",name="sequence length",min=1,max=256,default=16}
   params:set_action("sequence_length",function(x)
     debounce_sequence_length=20
@@ -92,11 +92,12 @@ function init()
   params:set_action("division",function(x)
     load("current_division="..division_options[x])()
   end)
+  params:add{type="control",id="swing",name="swing",controlspec=controlspec.new(0,100,'lin',1,50,'%',1/100)}
 
   params:add_group("engine",4)
   params:add_option("out_engine","engine output",{"no","yes"},midi_default==1 and 2 or 1)
   params:set_action("out_engine",function(x)
-    params:set("bass vol",x==1 and -96 or -6)
+    params:set("bass vol",x==1 and-96 or-6)
   end)
   params:add{type="control",id="bass vol",name="bass vol",controlspec=controlspec.new(-96,0,'lin',1,(midi_default==1 and-6 or-96),'',1/(96)),formatter=function(v)
     local val=math.floor(util.linlin(0,1,v.controlspec.minval,v.controlspec.maxval,v.raw)*10)/10
@@ -173,16 +174,19 @@ function init()
       if lattice_pattern.division~=current_division then
         lattice_pattern:set_division(current_division)
       end
+      if lattice_pattern.swing~=params:get("swing") then
+        lattice_pattern:set_swing(params:get("swing"))
+      end
       tt=tt+1
       if tt%16==0 and tape_ready then
-        tape_ready=false 
+        tape_ready=false
         audio.tape_play_start()
       end
       if tt%8==0 then
         -- do cc's
         local t=clock.get_beat_sec()*clock.get_beats()
         for i=1,3 do
-          if params:get("midi_lfo_cc"..i)>0 then 
+          if params:get("midi_lfo_cc"..i)>0 then
             local ccval=util.linlin(-1,1,params:get("midi_lfo_min"..i),params:get("midi_lfo_max"..i),
             math.sin(2*3.14159*t/params:get("midi_lfo_period"..i)))
             ccval=math.floor(util.round(ccval))
@@ -266,7 +270,6 @@ function init()
     -- TODO: load latest saved
   end
 
-
   all_notes_off()
 
   redraw()
@@ -282,7 +285,7 @@ function all_notes_off()
     local m=midis[midi_devices[params:get("midi_out_device")]].conn
     for j=20,80 do
       m:note_off(j,nil,params:get("midi_out_channel"))
-    end      
+    end
   end
 end
 
@@ -487,7 +490,7 @@ function redraw()
     local w=math.floor(128/n)
     local last_n=32
     for i,v in ipairs(designs[1].seq.data) do
-      local n=math.floor(util.linlin(note_mm[1],note_mm[2],60,4,v.note))
+      local n=math.floor(util.linlin(note_mm[1],note_mm[2],56,8,v.note))
       if i>1 then
         screen.level(1)
         screen.line_width(1)
@@ -498,14 +501,14 @@ function redraw()
       last_n=n
     end
     if designs[1].seq~=nil and designs[1].seq.data~=nil then
-      local n=math.floor(util.linlin(note_mm[1],note_mm[2],60,4,designs[1].seq.data[sel_note].note))
+      local n=math.floor(util.linlin(note_mm[1],note_mm[2],56,8,designs[1].seq.data[sel_note].note))
       screen.level(15)
       screen.line_width(1)
       screen.rect((sel_note-1)*w+1,n-3,w,7)
       screen.fill()
     end
     for i,v in ipairs(designs[1].seq.data) do
-      local n=math.floor(util.linlin(note_mm[1],note_mm[2],60,4,v.note))
+      local n=math.floor(util.linlin(note_mm[1],note_mm[2],56,8,v.note))
       if v.legato>0 then
         screen.level(i==designs[1].seq.ix and 15 or 5)
         screen.line_width(v.accent and 4 or 2)
@@ -513,6 +516,11 @@ function redraw()
         screen.line(i*w,n+(v.slide and 3 or 0))
         screen.stroke()
       end
+    end
+    if designs[1].seq~=nil and designs[1].seq.data~=nil then
+      screen.level(15)
+      screen.move(127,5)
+      screen.text_right(musicutil.note_num_to_name(designs[1].seq.data[designs[1].seq.ix].note,true))
     end
   end
   if fade_time>0 then

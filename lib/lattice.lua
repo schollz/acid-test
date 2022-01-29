@@ -23,6 +23,7 @@ function Lattice:new(args)
   l.superclock_id = nil
   l.pattern_id_counter = 100
   l.patterns = {}
+  l.pattern_ordering={}
   return l
 end
 
@@ -42,7 +43,7 @@ function Lattice:reset()
     clock.cancel(self.superclock_id)
     self.superclock_id = nil 
   end
-  for _, pattern in ipairs(self.patterns) do
+  for i, pattern in pairs(self.patterns) do
     pattern.phase = pattern.division * self.ppqn * self.meter * (1-pattern.delay)
     pattern.downbeat = false
   end
@@ -73,6 +74,7 @@ function Lattice:destroy()
     clock.cancel(self.superclock_id)
   end
   self.patterns = {}
+  self.pattern_ordering={}
 end
 
 --- set the meter of the lattice
@@ -94,7 +96,9 @@ end
 function Lattice:pulse()
   if self.enabled then
     local ppm = self.ppqn * self.meter
-    for id, pattern in ipairs(self.patterns) do
+    local flagged=false
+    for _, id in ipairs(self.pattern_ordering) do
+      local pattern=self.patterns[id]
       if pattern.enabled then
         pattern.phase = pattern.phase + 1
         local swing_val = (2*pattern.swing/100)
@@ -112,8 +116,12 @@ function Lattice:pulse()
           pattern.downbeat = not pattern.downbeat
         end
       elseif pattern.flag then
-        self.patterns[id] = nil
+        self.patterns[pattern.id] = nil
+	flagged=true
       end
+    end
+    if flagged then
+       self:order_patterns()
     end
     self.transport = self.transport + 1
   end
@@ -139,7 +147,18 @@ function Lattice:new_pattern(args)
   args.delay = args.delay == nil and 0 or args.delay
   local pattern = Pattern:new(args)
   self.patterns[self.pattern_id_counter] = pattern
+  self:order_patterns()
   return pattern
+end
+
+-- "private" method to keep numerical order of the pattern ids
+-- for use when pulsing
+function Lattice:order_patterns()
+  self.pattern_ordering={}
+  for id, pattern in pairs(self.patterns) do
+	table.insert(self.pattern_ordering,id)
+  end
+  table.sort(self.pattern_ordering)
 end
 
 --- "private" method to instantiate a new pattern, only called by Lattice:new_pattern()

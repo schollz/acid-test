@@ -26,6 +26,7 @@ if not string.find(package.cpath,"/home/we/dust/code/acid-test/lib/") then
   package.cpath=package.cpath..";/home/we/dust/code/acid-test/lib/?.so"
 end
 json=require("cjson")
+include("acid-test/lib/utils")
 lattice_=include("acid-test/lib/lattice")
 s=require("sequins")
 mm=include("acid-test/lib/mm")

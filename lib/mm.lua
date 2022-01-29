@@ -6,6 +6,7 @@ function MM:new(o)
   self.__index=self
 
   o.m=o.m or {{0,0},{0,0}}
+  o.vs={}
 
   o:normalize()
   return o
@@ -37,27 +38,55 @@ end
 
 -- sequence generates a sequence of n numbers
 -- from current position
-function MM:sequence(n,start)
-  if start==nil then
-    start=0
-    for i,_ in ipairs(self.m) do
-      start=start+self:next(i)
+function MM:sequence(n,changes)
+  if changes==nil or next(self.vs)==nil or n==changes then
+    -- generate from scratch
+    local v={}
+    local start=math.random(1,#self.m)
+    for i=1,n do
+      local n=self:nextv(start)
+      table.insert(v,n)
+      start=n
+    end  
+    self.vs=v
+  else
+    -- generate randomly based on current markov chain
+    local ordering={}
+    local v={}
+    local v2={}
+    for i,v0 in ipairs(self.vs) do 
+      table.insert(ordering,i)
+      table.insert(v,v0)
+      table.insert(v2,v0)
     end
-    start=math.floor(util.round(start/#self.m))
-  end
-  local v={}
-  for i=1,n do
-    if i>1 then
-      start=v[i-1]
+    table.shuffle(ordering)
+    for i_=1,changes do 
+      local i=ordering[i_]
+      local h=i-1 
+      if h<1 then
+        h=#v2
+      end
+      print(v[h])
+      v2[i]=self:nextv(v[h])
     end
-    table.insert(v,self:next(start))
+    self.vs=v2
   end
-  return v
+  local vreturn={}
+  for _,v0 in ipairs(self.vs) do 
+    table.insert(vreturn,v0)
+  end
+  return vreturn
 end
 
 -- returns next index from current
-function MM:next(cur)
+function MM:nextv(cur)
   local r=math.random()
+  if self.m[cur]==nil then
+    print("uh oh")
+    print("want "..cur)
+    self:print()
+    return cur 
+  end
   for i,v in ipairs(self.m[cur]) do
     if r<=v then
       return i
@@ -67,11 +96,12 @@ function MM:next(cur)
 end
 
 function MM:dump()
-  return self.m
+  return {m=self.m,vs=self.vs}
 end
 
 function MM:load(m)
-  self.m=m
+  self.m=m.m 
+  self.vs=m.vs
 end
 
 function MM:draw(x,y,w,h,l)

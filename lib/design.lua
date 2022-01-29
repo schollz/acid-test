@@ -133,7 +133,7 @@ function Design:sequence(n,changes)
 
   local seqs={}
   for k,p in pairs(self.p) do
-    seqs[k]=p.m:sequence(n)
+    seqs[k]=p.m:sequence(n,changes)
     for i,ind in ipairs(seqs[k]) do
       seqs[k][i]=self.p[k].v[ind]
     end

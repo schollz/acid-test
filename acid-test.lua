@@ -94,7 +94,7 @@ function init()
   end)
   params:add{type="control",id="swing",name="swing",controlspec=controlspec.new(0,100,'lin',1,50,'%',1/100)}
 
-  params:add_group("engine",4)
+  params:add_group("engine",8)
   params:add_option("out_engine","engine output",{"no","yes"},midi_default==1 and 2 or 1)
   params:set_action("out_engine",function(x)
     params:set("bass vol",x==1 and-96 or-6)
@@ -103,7 +103,23 @@ function init()
     local val=math.floor(util.linlin(0,1,v.controlspec.minval,v.controlspec.maxval,v.raw)*10)/10
     return ((val<0) and "" or "+")..val.." dB"
   end}
+  params:add{type="control",id="bass delay send",name="bass delay send",controlspec=controlspec.new(-96,-12,'lin',1,-96,'',1/(96-12)),formatter=function(v)
+    local val=math.floor(util.linlin(0,1,v.controlspec.minval,v.controlspec.maxval,v.raw)*10)/10
+    return ((val<0) and "" or "+")..val.." dB"
+  end}
+  params:add{type="control",id="bass rev send",name="bass rev send",controlspec=controlspec.new(-96,-12,'lin',1,-96,'',1/(96-12)),formatter=function(v)
+    local val=math.floor(util.linlin(0,1,v.controlspec.minval,v.controlspec.maxval,v.raw)*10)/10
+    return ((val<0) and "" or "+")..val.." dB"
+  end}
   params:add{type="control",id="kick vol",name="kick vol",controlspec=controlspec.new(-96,-12,'lin',1,-96,'',1/(96-12)),formatter=function(v)
+    local val=math.floor(util.linlin(0,1,v.controlspec.minval,v.controlspec.maxval,v.raw)*10)/10
+    return ((val<0) and "" or "+")..val.." dB"
+  end}
+  params:add{type="control",id="kick delay send",name="kick delay send",controlspec=controlspec.new(-96,-12,'lin',1,-96,'',1/(96-12)),formatter=function(v)
+    local val=math.floor(util.linlin(0,1,v.controlspec.minval,v.controlspec.maxval,v.raw)*10)/10
+    return ((val<0) and "" or "+")..val.." dB"
+  end}
+  params:add{type="control",id="kick rev send",name="kick rev send",controlspec=controlspec.new(-96,-12,'lin',1,-96,'',1/(96-12)),formatter=function(v)
     local val=math.floor(util.linlin(0,1,v.controlspec.minval,v.controlspec.maxval,v.raw)*10)/10
     return ((val<0) and "" or "+")..val.." dB"
   end}
@@ -199,9 +215,9 @@ function init()
             last_midi_cc[i]=ccval
           end
         end
-        -- engine.acidTest_drum("kick",util.dbamp(params:get("kick vol")),0.0,0.0)
-        -- elseif tt%4==0 then
-        --   engine.acidTest_drum("snare",util.dbamp(params:get("snare vol")),0.0,0.0)
+        engine.acidTest_drum("kick",util.dbamp(params:get("kick vol")),util.dbamp(params:get("kick delay send")),util.dbamp(params:get("kick rev send")))
+      elseif tt%4==0 then
+         engine.acidTest_drum("snare",util.dbamp(params:get("snare vol")),0.0,0.0)
       end
       if params:get("evolve")>1 then
         if tt%(4*params:get("evolve"))==0 then
@@ -275,6 +291,7 @@ function init()
   redraw()
   lattice:start()
 
+  engine.acidTest_delay(clock.get_beat_sec()/8,4,0.04)
 end
 
 function all_notes_off()
@@ -433,7 +450,9 @@ function play(i,v,t)
     -- print("note on: "..v.note)
     -- Audio engine out
     if params:get("out_engine")==2 then
-      engine["acidTest_"..t](velocity/127*util.dbamp(params:get("bass vol")),v.note,0.0,0.0,v.slide and clock.get_beat_sec()/4 or 0)
+      local delaySend=util.dbamp(params:get("bass delay send"))
+      local reverbSend=util.dbamp(params:get("bass delay send"))
+      engine["acidTest_"..t](velocity/127*util.dbamp(params:get("bass vol")),v.note,delaySend,reverbSend,v.slide and clock.get_beat_sec()/4 or 0)
       engine["acidTest_"..t.."_gate"](1)
     end
     if params:get("out_crow")==2 then

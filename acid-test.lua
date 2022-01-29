@@ -443,7 +443,10 @@ function play(i,v,t)
       crow.output[2].volts=5
     end
     if params:get("out_crow_jf")==2 then
-      crow.ii.jf.play_note((v.note-60)/12,5)
+        crow.ii.jf.mode(1)
+        crow.ii.jf.play_note((v.note-60)/12,5)
+    else
+      crow.ii.jf.mode(0)
     end
     if m~=nil then
       m.conn:note_on(v.note,velocity,params:get("midi_out_channel"))

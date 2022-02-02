@@ -1,4 +1,4 @@
--- acid test v0.2.0
+-- acid test v0.2.1
 -- generative acid basslines.
 --
 -- llllllll.co/t/acid-test
@@ -443,8 +443,8 @@ function play(i,v,t)
       crow.output[2].volts=5
     end
     if params:get("out_crow_jf")==2 then
-        crow.ii.jf.mode(1)
-        crow.ii.jf.play_note((v.note-60)/12,5)
+      crow.ii.jf.mode(1)
+      crow.ii.jf.play_note((v.note-60)/12,5)
     else
       crow.ii.jf.mode(0)
     end
@@ -473,6 +473,18 @@ function play(i,v,t)
 end
 
 function redraw()
+  if designs==nil then
+    do return end
+  end
+  if designs[1]==nil then
+    do return end
+  end
+  if designs[1].seq==nil then
+    do return end
+  end
+  if designs[1].seq.data==nil then
+    do return end
+  end
   screen.clear()
   screen.line_cap("round")
   if markov_mode then
@@ -523,7 +535,9 @@ function redraw()
     if designs[1].seq~=nil and designs[1].seq.data~=nil then
       screen.level(15)
       screen.move(127,5)
-      screen.text_right(musicutil.note_num_to_name(designs[1].seq.data[designs[1].seq.ix].note,true))
+      if designs[1].seq.data[designs[1].seq.ix]~=nil then
+        screen.text_right(musicutil.note_num_to_name(designs[1].seq.data[designs[1].seq.ix].note,true))
+      end
     end
   end
   if fade_time>0 then

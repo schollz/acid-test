@@ -69,6 +69,11 @@ function init()
 
   local debounce_sequence_length=0
   params:add_separator("acid test")
+  params:add{type="control",id="res",name="res",controlspec=controlspec.new(0.1,0.9,'lin',0.01,0.2,'',0.01/0.8),action=function(x) engine.res(x) end}
+  params:add{type="control",id="ctf",name="ctf",controlspec=controlspec.new(10,5010,'exp',5,100,'',5/5000),action=function(x) engine.ctf(x) end}
+  params:add{type="control",id="env",name="env",controlspec=controlspec.new(10,10010,'exp',5,1000,'',5/10000),action=function(x) engine.env(x) end}
+  params:add{type="control",id="sus",name="sus",controlspec=controlspec.new(0.0,1.0,'lin',0.01,0.0,'',0.01/1.0),action=function(x) engine.sus(x) end}
+  params:add{type="control",id="dec",name="dec",controlspec=controlspec.new(0.01,10.0,'exp',0.01,1.0,'',0.01/10.0),action=function(x) engine.dec(x) end}
   params:add_group("sequences",8)
   params:add{type="number",id="sequence_length",name="sequence length",min=1,max=256,default=16}
   params:set_action("sequence_length",function(x)

@@ -192,11 +192,26 @@ Engine_AcidTest : CroneEngine {
 
 
 		SynthDef("acidTest2", {
-			arg outBus=0, amp=1.0,
+			arg outBus=0, amp=1.0, ctf=100,res=0.2,env=1000,sus=0.0,dec=1.0,
 			gate=1, pitch=50,port=0,
 			reverbOut, reverbSend=0, delayOut, delaySend=0;
 			var env1, env2, out, snd;
+			var freq, wave, vol,filEnv,volEnv,waves;
 			pitch = Lag.kr([pitch,pitch+0.05], port);
+			
+wave = 0;
+vol = amp;
+freq=pitch.midicps;
+volEnv = EnvGen.ar(Env.new([10e-10, 1, 1, 10e-10], [0.01, sus, dec],
+                              'exp'), gate);
+filEnv = EnvGen.ar(Env.new([10e-10, 1, 10e-10], [0.01, dec],
+                              'exp'), gate);
+
+waves = [Saw.ar(freq, volEnv), Pulse.ar(freq, 0.5, volEnv)];
+snd = RLPFD.ar( Select.ar(wave, waves), ctf + (filEnv * env), res).dup * vol;
+			
+	
+			/*
 			env1 = EnvGen.ar(Env.perc(0.01,0.7,4,-4), gate, amp);
 			env2 = EnvGen.ar(Env.perc(0.001,0.3,600*SinOsc.kr(0.123).range(0.5,4),-3), gate);
 			out = LFPulse.ar(pitch.midicps, 0, 0.5);
@@ -205,6 +220,7 @@ Engine_AcidTest : CroneEngine {
 			out = LeakDC.ar((out * env1).tanh);
 
 			snd = out.tanh;
+			*/
 
 			Out.ar(delayOut,snd*delaySend);
 			Out.ar(reverbOut,snd*reverbSend);
@@ -232,6 +248,13 @@ Engine_AcidTest : CroneEngine {
 				\port,msg[5],
 			);
 		});
+
+		this.addCommand("ctf","f",{ arg msg; acidTestSynthBass.set(\ctf,msg[1]) });
+		this.addCommand("res","f",{ arg msg; acidTestSynthBass.set(\res,msg[1]) });
+		this.addCommand("sus","f",{ arg msg; acidTestSynthBass.set(\sus,msg[1]) });
+		this.addCommand("dec","f",{ arg msg; acidTestSynthBass.set(\dec,msg[1]) });
+		this.addCommand("env","f",{ arg msg; acidTestSynthBass.set(\env,msg[1]) });
+
 		this.addCommand("acidTest_bass_gate","i",{ arg msg;
 			acidTestSynthBass.set(
 				\gate,msg[1],
